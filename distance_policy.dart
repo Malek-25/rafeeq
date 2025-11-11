@@ -1,0 +1,22 @@
+import 'dart:math';
+import '../app_config.dart';
+
+class DistancePolicy {
+  static double distanceKm(double lat1, double lon1, double lat2, double lon2) {
+    const R = 6371.0;
+    double dLat = _deg2rad(lat2 - lat1);
+    double dLon = _deg2rad(lon2 - lon1);
+    double a = sin(dLat/2) * sin(dLat/2) +
+      cos(_deg2rad(lat1)) * cos(_deg2rad(lat2)) *
+      sin(dLon/2) * sin(dLon/2);
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+    return R * c;
+  }
+
+  static bool isAllowed(double listingLat, double listingLng) {
+    final d = distanceKm(AppConfig.uniLat, AppConfig.uniLng, listingLat, listingLng);
+    return d <= AppConfig.maxDistanceKm;
+  }
+
+  static double _deg2rad(double deg) => deg * (pi/180.0);
+}
