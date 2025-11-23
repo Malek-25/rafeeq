@@ -28,7 +28,7 @@ class HousingListScreen extends StatelessWidget {
                     Navigator.pushNamed(context, '/provider/add-housing');
                   },
                   icon: const Icon(Icons.add),
-                  tooltip: 'إضافة سكن جديد',
+                  tooltip: l10n.addNewHousing,
                 ),
               ]
             : null,
@@ -67,8 +67,8 @@ class HousingListScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         Text(
                           appState.role == UserRole.provider 
-                              ? 'لم تقم بإضافة أي سكن بعد'
-                              : 'لا توجد وحدات سكنية متاحة حالياً',
+                              ? l10n.noHousingsYet
+                              : l10n.noHousingsAvailable,
                           style: const TextStyle(
                             fontSize: 18,
                             color: Colors.grey,
@@ -81,7 +81,7 @@ class HousingListScreen extends StatelessWidget {
                               Navigator.pushNamed(context, '/provider/add-housing');
                             },
                             icon: const Icon(Icons.add),
-                            label: const Text('إضافة سكن جديد'),
+                            label: Text(l10n.addNewHousing),
                           ),
                         ],
                       ],
@@ -138,14 +138,14 @@ class HousingListScreen extends StatelessWidget {
                               Text(housing.description),
                               const SizedBox(height: 4),
                               Text(
-                                '${housing.pricePerMonth.toStringAsFixed(0)} ${l10n.jod} / شهر • ★ ${housing.rating}',
+                                '${housing.pricePerMonth.toStringAsFixed(0)} ${l10n.jod} / ${l10n.month} • ★ ${housing.rating}',
                                 style: TextStyle(
                                   color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               Text(
-                                '${housing.distanceFromUni.toStringAsFixed(1)} كم من الجامعة',
+                                '${housing.distanceFromUni.toStringAsFixed(1)} ${l10n.kmFromUniversity}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
@@ -166,7 +166,7 @@ class HousingListScreen extends StatelessWidget {
                                   onPressed: () {
                                     // Navigate to housing details
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('عرض تفاصيل ${housing.title}')),
+                                      SnackBar(content: Text('${l10n.viewDetails} ${housing.title}')),
                                     );
                                   },
                                   child: Text(l10n.details),
@@ -217,7 +217,7 @@ class HousingListScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.confirmDelete),
-        content: const Text('هل أنت متأكد من حذف هذا السكن؟'),
+        content: Text(l10n.deleteHousingConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -229,8 +229,8 @@ class HousingListScreen extends StatelessWidget {
               if (context.mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('تم حذف السكن بنجاح'),
+                  SnackBar(
+                    content: Text(l10n.housingDeletedSuccess),
                     backgroundColor: Colors.green,
                   ),
                 );

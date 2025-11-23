@@ -28,7 +28,7 @@ class ServicesListScreen extends StatelessWidget {
                     Navigator.pushNamed(context, '/provider/add-service');
                   },
                   icon: const Icon(Icons.add),
-                  tooltip: 'إضافة خدمة جديدة',
+                  tooltip: l10n.addNewService,
                 ),
               ]
             : null,
@@ -118,7 +118,7 @@ class ServicesListScreen extends StatelessWidget {
                         Text(service.description),
                         const SizedBox(height: 4),
                         Text(
-                          '${service.pricePerUnit.toStringAsFixed(2)} د.أ / ${_getUnitDisplayName(service.unit)}',
+                          '${service.pricePerUnit.toStringAsFixed(2)} ${l10n.jod} / ${_getUnitDisplayName(service.unit, l10n)}',
                           style: TextStyle(
                             color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.w600,
@@ -126,7 +126,7 @@ class ServicesListScreen extends StatelessWidget {
                         ),
                         if (appState.role == UserRole.provider)
                           Text(
-                            'بواسطة: ${service.providerName}',
+                            '${l10n.by} ${service.providerName}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
@@ -156,7 +156,7 @@ class ServicesListScreen extends StatelessWidget {
                               if (value == 'toggle') {
                                 await servicesProvider.toggleServiceStatus(service.id);
                               } else if (value == 'delete') {
-                                _showDeleteDialog(context, service.id, servicesProvider);
+                                _showDeleteDialog(context, service.id, servicesProvider, l10n);
                               }
                             },
                             itemBuilder: (context) => [
@@ -166,17 +166,17 @@ class ServicesListScreen extends StatelessWidget {
                                   children: [
                                     Icon(service.isActive ? Icons.pause : Icons.play_arrow),
                                     const SizedBox(width: 8),
-                                    Text(service.isActive ? 'إيقاف' : 'تفعيل'),
+                                    Text(service.isActive ? l10n.deactivate : l10n.activate),
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.delete, color: Colors.red),
-                                    SizedBox(width: 8),
-                                    Text('حذف', style: TextStyle(color: Colors.red)),
+                                    const Icon(Icons.delete, color: Colors.red),
+                                    const SizedBox(width: 8),
+                                    Text(l10n.delete, style: const TextStyle(color: Colors.red)),
                                   ],
                                 ),
                               ),
@@ -189,11 +189,13 @@ class ServicesListScreen extends StatelessWidget {
     );
   }
 
-  String _getUnitDisplayName(String unit) {
+  String _getUnitDisplayName(String unit, AppLocalizations l10n) {
     switch(unit) {
-      case 'item': return 'قطعة';
-      case 'basket': return 'سلة';
-      case 'hour': return 'ساعة';
+      case 'item': return l10n.item;
+      case 'basket': return l10n.basket;
+      case 'hour': return l10n.hour;
+      case 'trip': return l10n.trip;
+      case 'km': return l10n.km;
       default: return unit;
     }
   }
@@ -202,20 +204,21 @@ class ServicesListScreen extends StatelessWidget {
     switch(category) {
       case 'laundry': return Icons.local_laundry_service_rounded;
       case 'cleaning': return Icons.cleaning_services_rounded;
+      case 'transportation': return Icons.directions_car_rounded;
       default: return Icons.room_service_rounded;
     }
   }
 
-  void _showDeleteDialog(BuildContext context, String serviceId, ServicesProvider provider) {
+  void _showDeleteDialog(BuildContext context, String serviceId, ServicesProvider provider, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('تأكيد الحذف'),
-        content: const Text('هل أنت متأكد من حذف هذه الخدمة؟'),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.deleteServiceConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -223,15 +226,15 @@ class ServicesListScreen extends StatelessWidget {
               if (context.mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('تم حذف الخدمة بنجاح'),
+                  SnackBar(
+                    content: Text(l10n.serviceDeletedSuccess),
                     backgroundColor: Colors.green,
                   ),
                 );
               }
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('حذف'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

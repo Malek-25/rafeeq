@@ -47,7 +47,7 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
           children: [
             // Photos section
             Text(
-              'صور السكن',
+              l10n.housingPhotos,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -120,7 +120,7 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('خطأ في اختيار الصور: $e'),
+                          content: Text('${l10n.errorPickingImages}: $e'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -139,7 +139,7 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
               decoration: InputDecoration(
                 labelText: l10n.title,
                 border: const OutlineInputBorder(),
-                hintText: 'مثال: شقة مفروشة قريبة من الجامعة',
+                hintText: l10n.titleExample,
               ),
             ),
             const SizedBox(height: 16),
@@ -148,10 +148,10 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
             TextField(
               controller: description,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'وصف السكن',
-                border: OutlineInputBorder(),
-                hintText: 'اكتب وصف مفصل للسكن، المرافق المتاحة، القرب من الخدمات...',
+              decoration: InputDecoration(
+                labelText: l10n.housingDescription,
+                border: const OutlineInputBorder(),
+                hintText: l10n.housingDescriptionHint,
               ),
             ),
             const SizedBox(height: 16),
@@ -206,7 +206,7 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
             
             // Location
             Text(
-              'الموقع',
+              l10n.location,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -245,21 +245,21 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.blue.shade200),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade700),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'يجب أن يكون السكن ضمن 2 كم من الجامعة',
-                      style: TextStyle(
-                        color: Colors.blue.shade700,
-                        fontSize: 12,
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.blue.shade700),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.mustBeWithin2km,
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
             ),
             const SizedBox(height: 24),
             
@@ -273,8 +273,8 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                       description.text.trim().isEmpty || 
                       price.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('يرجى ملء جميع الحقول المطلوبة'),
+                      SnackBar(
+                        content: Text(l10n.fillAllFields),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -284,8 +284,8 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                   final priceValue = double.tryParse(price.text.trim());
                   if (priceValue == null || priceValue <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('يرجى إدخال سعر صحيح'),
+                      SnackBar(
+                        content: Text(l10n.enterValidPrice),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -297,8 +297,8 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                   
                   if (latValue == null || lngValue == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('يرجى إدخال إحداثيات صحيحة'),
+                      SnackBar(
+                        content: Text(l10n.enterValidCoordinates),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -314,7 +314,7 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                     longitude: lngValue,
                     distanceFromUni: 0, // Will be calculated in provider
                     providerId: appState.userEmail ?? 'unknown',
-                    providerName: appState.userName ?? 'مقدم خدمة',
+                    providerName: appState.userName ?? appState.userEmail?.split('@')[0] ?? 'User',
                     imagePaths: imagePaths,
                     createdAt: DateTime.now(),
                     genderPreference: selectedGender,
@@ -326,16 +326,16 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                   if (context.mounted) {
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('تم إضافة السكن بنجاح!'),
+                        SnackBar(
+                          content: Text(l10n.housingAddedSuccess),
                           backgroundColor: Colors.green,
                         ),
                       );
                       Navigator.pop(context);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('السكن بعيد جداً عن الجامعة (أكثر من 2 كم)'),
+                        SnackBar(
+                          content: Text(l10n.housingTooFar),
                           backgroundColor: Colors.red,
                         ),
                       );

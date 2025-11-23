@@ -23,12 +23,14 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
   String selectedCategory = 'laundry';
   String selectedUnit = 'item';
   
-  final categories = ['laundry', 'cleaning'];
+  final categories = ['laundry', 'cleaning', 'transportation'];
   List<String> get availableUnits {
     if (selectedCategory == 'laundry') {
       return ['item', 'basket'];
     } else if (selectedCategory == 'cleaning') {
       return ['hour'];
+    } else if (selectedCategory == 'transportation') {
+      return ['trip', 'hour', 'km'];
     }
     return ['item'];
   }
@@ -81,7 +83,7 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
             decoration: InputDecoration(
               labelText: l10n.serviceName, 
               border: const OutlineInputBorder(),
-              hintText: 'مثال: غسيل ملابس، تنظيف غرف',
+              hintText: l10n.laundryExample,
             )
           ),
           const SizedBox(height: 16),
@@ -90,10 +92,10 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
           TextField(
             controller: description,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'وصف الخدمة',
-              border: OutlineInputBorder(),
-              hintText: 'اكتب وصف مفصل للخدمة المقدمة',
+              decoration: InputDecoration(
+              labelText: l10n.serviceDescription,
+              border: const OutlineInputBorder(),
+              hintText: l10n.serviceDescriptionHint,
             )
           ),
           const SizedBox(height: 16),
@@ -101,15 +103,16 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
           // Category dropdown
           DropdownButtonFormField<String>(
             value: selectedCategory,
-            decoration: const InputDecoration(
-              labelText: 'فئة الخدمة',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.serviceCategory,
+              border: const OutlineInputBorder(),
             ),
             items: categories.map((category) {
               String displayName;
               switch(category) {
                 case 'laundry': displayName = l10n.laundryCategory; break;
                 case 'cleaning': displayName = l10n.cleaningCategory; break;
+                case 'transportation': displayName = l10n.transportationCategory; break;
                 default: displayName = category;
               }
               return DropdownMenuItem(
@@ -139,10 +142,10 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
                 child: TextField(
                   controller: price, 
                   keyboardType: TextInputType.number, 
-                  decoration: const InputDecoration(
-                    labelText: 'السعر (دينار أردني)', 
-                    border: OutlineInputBorder(),
-                    hintText: '0.50',
+                  decoration: InputDecoration(
+                    labelText: l10n.priceJOD, 
+                    border: const OutlineInputBorder(),
+                    hintText: l10n.priceHint,
                   )
                 ),
               ),
@@ -150,9 +153,9 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: selectedUnit,
-                  decoration: const InputDecoration(
-                    labelText: 'الوحدة',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.unit,
+                    border: const OutlineInputBorder(),
                   ),
                   items: availableUnits.map((unit) {
                     String displayName;
@@ -188,8 +191,8 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
                     description.text.trim().isEmpty || 
                     price.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('يرجى ملء جميع الحقول المطلوبة'),
+                    SnackBar(
+                      content: Text(l10n.fillAllFields),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -199,8 +202,8 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
                 final priceValue = double.tryParse(price.text.trim());
                 if (priceValue == null || priceValue <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('يرجى إدخال سعر صحيح'),
+                    SnackBar(
+                      content: Text(l10n.enterValidPrice),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -215,7 +218,7 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
                   unit: selectedUnit,
                   category: selectedCategory,
                   providerId: appState.userEmail ?? 'unknown',
-                  providerName: appState.userName ?? 'مقدم خدمة',
+                  providerName: appState.userName ?? appState.userEmail?.split('@')[0] ?? 'User',
                   imagePath: photoPath,
                   createdAt: DateTime.now(),
                 );
@@ -226,16 +229,16 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
                 if (context.mounted) {
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('تم إضافة الخدمة بنجاح!'),
+                      SnackBar(
+                        content: Text(l10n.serviceAddedSuccess),
                         backgroundColor: Colors.green,
                       ),
                     );
                     Navigator.pop(context);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('حدث خطأ أثناء إضافة الخدمة'),
+                      SnackBar(
+                        content: Text(l10n.errorAddingService),
                         backgroundColor: Colors.red,
                       ),
                     );

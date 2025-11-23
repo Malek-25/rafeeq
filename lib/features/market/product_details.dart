@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/product.dart';
+import '../../core/providers/app_provider.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   const ProductDetailsScreen({super.key});
@@ -8,6 +10,10 @@ class ProductDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Product p = ModalRoute.of(context)!.settings.arguments as Product;
+    // Check if current user is the seller
+    final appState = Provider.of<AppState>(context, listen: false);
+    final isOwner = appState.userEmail == p.sellerEmail;
+    
     return Scaffold(
       appBar: AppBar(title: const Text('Product Details')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
@@ -31,13 +37,37 @@ class ProductDetailsScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Row(children: [ const Icon(Icons.location_on_outlined, size: 16), const SizedBox(width: 4), Text(p.location) ]),
         const SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: FilledButton(onPressed: (){}, child: const Text('Buy now'))),
-          const SizedBox(width: 8),
-          Expanded(child: OutlinedButton(onPressed: (){ Navigator.pushNamed(context, '/chat/thread', arguments: p.sellerName); }, child: const Text('Chat with seller'))),
-          const SizedBox(width: 8),
-          Expanded(child: OutlinedButton(onPressed: () async { final uri = Uri(scheme: 'tel', path: p.sellerPhone); await launchUrl(uri); }, child: const Text('Call seller'))),
-        ]),
+        // Only show action buttons if user is not the owner
+        if (!isOwner)
+          Row(children: [
+            Expanded(child: FilledButton(onPressed: (){}, child: const Text('Buy now'))),
+            const SizedBox(width: 8),
+            Expanded(child: OutlinedButton(onPressed: (){ Navigator.pushNamed(context, '/chat/thread', arguments: p.sellerName); }, child: const Text('Chat with seller'))),
+            const SizedBox(width: 8),
+            Expanded(child: OutlinedButton(onPressed: () async { final uri = Uri(scheme: 'tel', path: p.sellerPhone); await launchUrl(uri); }, child: const Text('Call seller'))),
+          ])
+        else
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'This is your listing',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ]),
     );
   }

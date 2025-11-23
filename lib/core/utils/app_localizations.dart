@@ -110,13 +110,11 @@ class AppLocalizations {
   String get addPhoto => isArabic ? 'إضافة صورة' : 'Add photo';
   
   // Services
-  String get laundryCleaningServices => isArabic ? 'غسيل وتنظيف' : 'Laundry & Cleaning';
   String get perItem => isArabic ? 'لكل قطعة' : 'per item';
   String get perVisit => isArabic ? 'لكل زيارة' : 'per visit';
   String get perPiece => isArabic ? 'لكل قطعة' : 'per piece';
   
   // Common
-  String get welcomeText => isArabic ? 'مرحباً' : 'Welcome';
   String get visitHomepage => isArabic ? 'زيارة الموقع الإلكتروني' : 'Visit Homepage';
   
   // Housing List
@@ -149,6 +147,7 @@ class AppLocalizations {
   String get unit => isArabic ? 'الوحدة' : 'Unit';
   String get laundryCategory => isArabic ? 'غسيل ملابس' : 'Laundry';
   String get cleaningCategory => isArabic ? 'تنظيف' : 'Cleaning';
+  String get transportationCategory => isArabic ? 'نقل' : 'Transportation';
   String get piece => isArabic ? 'قطعة' : 'Piece';
   String get visit => isArabic ? 'زيارة' : 'Visit';
   String get hour => isArabic ? 'ساعة' : 'Hour';
@@ -200,6 +199,11 @@ class AppLocalizations {
   String get halfHour => isArabic ? 'نصف ساعة' : 'Half Hour';
   String get hours => isArabic ? 'ساعات' : 'Hours';
   String get orderSent => isArabic ? 'تم إرسال الطلب بنجاح' : 'Order sent successfully';
+  String get providerDefault => isArabic ? 'مقدم خدمة' : 'Provider';
+  
+  // Transportation
+  String get trip => isArabic ? 'رحلة' : 'Trip';
+  String get km => isArabic ? 'كم' : 'km';
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

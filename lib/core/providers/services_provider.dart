@@ -8,9 +8,13 @@ class ServicesProvider extends ChangeNotifier {
   
   List<Service> get allServices => List.unmodifiable(_services);
   
-  // Get services for students (all active services)
+  // Get services for students (all active services, excluding default listings)
   List<Service> get servicesForStudents => 
-      _services.where((service) => service.isActive).toList();
+      _services.where((service) => 
+        service.isActive && 
+        !service.id.startsWith('default_') &&
+        !service.providerId.startsWith('default_')
+      ).toList();
   
   // Get services for a specific provider
   List<Service> getServicesForProvider(String providerId) =>
@@ -22,71 +26,7 @@ class ServicesProvider extends ChangeNotifier {
           service.category == category && service.isActive).toList();
 
   ServicesProvider() {
-    _loadDefaultServices();
     _loadServices();
-  }
-
-  // Load default services (for demo purposes)
-  void _loadDefaultServices() {
-    final defaultServices = [
-      Service(
-        id: 'default_1',
-        name: 'Laundry (per item)',
-        description: 'Wash & dry. 24h turnaround.',
-        pricePerUnit: 0.40,
-        unit: 'item',
-        category: 'laundry',
-        providerId: 'default_provider_1',
-        providerName: 'Campus Laundry Service',
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-      ),
-      Service(
-        id: 'default_2',
-        name: 'Ironing (per item)',
-        description: 'Pressed & folded.',
-        pricePerUnit: 0.30,
-        unit: 'item',
-        category: 'laundry',
-        providerId: 'default_provider_1',
-        providerName: 'Campus Laundry Service',
-        createdAt: DateTime.now().subtract(const Duration(days: 29)),
-      ),
-      Service(
-        id: 'default_3',
-        name: 'Laundry + Ironing (per item)',
-        description: 'Best value combo.',
-        pricePerUnit: 0.60,
-        unit: 'item',
-        category: 'laundry',
-        providerId: 'default_provider_1',
-        providerName: 'Campus Laundry Service',
-        createdAt: DateTime.now().subtract(const Duration(days: 28)),
-      ),
-      Service(
-        id: 'default_4',
-        name: 'Carpet Cleaning (per piece)',
-        description: 'Small rugs & carpets.',
-        pricePerUnit: 2.50,
-        unit: 'piece',
-        category: 'cleaning',
-        providerId: 'default_provider_2',
-        providerName: 'Clean & Fresh',
-        createdAt: DateTime.now().subtract(const Duration(days: 27)),
-      ),
-      Service(
-        id: 'default_5',
-        name: 'Room Cleaning (per visit)',
-        description: 'Basic cleaning, 45–60 min.',
-        pricePerUnit: 3.00,
-        unit: 'visit',
-        category: 'cleaning',
-        providerId: 'default_provider_2',
-        providerName: 'Clean & Fresh',
-        createdAt: DateTime.now().subtract(const Duration(days: 26)),
-      ),
-    ];
-    
-    _services.addAll(defaultServices);
   }
 
   // Load services from storage
@@ -99,8 +39,10 @@ class ServicesProvider extends ChangeNotifier {
         final serviceMap = json.decode(serviceJson) as Map<String, dynamic>;
         final service = Service.fromMap(serviceMap);
         
-        // Avoid duplicates with default services
-        if (!_services.any((s) => s.id == service.id)) {
+        // Only load non-default services (exclude default listings)
+        if (!service.id.startsWith('default_') && 
+            !service.providerId.startsWith('default_') &&
+            !_services.any((s) => s.id == service.id)) {
           _services.add(service);
         }
       }

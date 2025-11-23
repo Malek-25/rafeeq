@@ -9,64 +9,20 @@ class HousingProvider extends ChangeNotifier {
   
   List<Housing> get allHousings => List.unmodifiable(_housings);
   
-  // Get housings for students (all active housings within 2km)
+  // Get housings for students (all active housings within 2km, excluding default listings)
   List<Housing> get housingsForStudents => 
-      _housings.where((housing) => housing.isActive && housing.distanceFromUni <= 2.0).toList();
+      _housings.where((housing) => 
+        housing.isActive && 
+        housing.distanceFromUni <= 2.0 && 
+        !housing.id.startsWith('default_')
+      ).toList();
   
   // Get housings for a specific provider
   List<Housing> getHousingsForProvider(String providerId) =>
       _housings.where((housing) => housing.providerId == providerId).toList();
 
   HousingProvider() {
-    _loadDefaultHousings();
     _loadHousings();
-  }
-
-  // Load default housings (for demo purposes)
-  void _loadDefaultHousings() {
-    final defaultHousings = [
-      Housing(
-        id: 'default_1',
-        title: 'Modern Studio near ASU',
-        description: 'Modern studio apartment with all amenities, perfect for students.',
-        pricePerMonth: 250.0,
-        latitude: 32.0100,
-        longitude: 35.8443,
-        distanceFromUni: 0.8,
-        providerId: 'default_housing_provider_1',
-        providerName: 'ASU Housing',
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        rating: 4,
-      ),
-      Housing(
-        id: 'default_2',
-        title: '2BR Apartment',
-        description: 'Spacious 2-bedroom apartment with friendly roommates.',
-        pricePerMonth: 380.0,
-        latitude: 32.0110,
-        longitude: 35.8451,
-        distanceFromUni: 1.2,
-        providerId: 'default_housing_provider_2',
-        providerName: 'Student Housing Co.',
-        createdAt: DateTime.now().subtract(const Duration(days: 25)),
-        rating: 4,
-      ),
-      Housing(
-        id: 'default_3',
-        title: 'Cozy Room',
-        description: 'Private room in a quiet neighborhood with kitchen access.',
-        pricePerMonth: 180.0,
-        latitude: 32.0250,
-        longitude: 35.8600,
-        distanceFromUni: 1.8,
-        providerId: 'default_housing_provider_3',
-        providerName: 'Campus Living',
-        createdAt: DateTime.now().subtract(const Duration(days: 20)),
-        rating: 3,
-      ),
-    ];
-    
-    _housings.addAll(defaultHousings);
   }
 
   // Load housings from storage
@@ -79,8 +35,8 @@ class HousingProvider extends ChangeNotifier {
         final housingMap = json.decode(housingJson) as Map<String, dynamic>;
         final housing = Housing.fromMap(housingMap);
         
-        // Avoid duplicates with default housings
-        if (!_housings.any((h) => h.id == housing.id)) {
+        // Only load non-default housings (exclude default listings)
+        if (!housing.id.startsWith('default_') && !_housings.any((h) => h.id == housing.id)) {
           _housings.add(housing);
         }
       }
