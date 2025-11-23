@@ -178,7 +178,12 @@ class HomeScreen extends StatelessWidget {
                 _HomeTile(title: l10n.housing, icon: Icons.home_rounded, route: '/housing', color: _getAdaptiveColor(context, const Color(0xFF2196F3))),
                 if(app.role == UserRole.student) 
                   _HomeTile(title: l10n.studentMarket, icon: Icons.storefront_rounded, route: '/market', color: _getAdaptiveColor(context, const Color(0xFF4CAF50))),
-                _HomeTile(title: l10n.laundryCleaning, icon: Icons.local_laundry_service_rounded, route: '/services', color: _getAdaptiveColor(context, const Color(0xFFFF9800))),
+                _HomeTile(
+                  title: l10n.laundryCleaning, 
+                  icon: Icons.local_laundry_service_rounded, 
+                  route: '/services', 
+                  color: _getAdaptiveColor(context, const Color(0xFFFF9800)),
+                ),
                 _HomeTile(title: l10n.orders, icon: Icons.receipt_long_rounded, route: '/orders', color: _getAdaptiveColor(context, const Color(0xFF3F51B5))),
                 _HomeTile(title: l10n.inbox, icon: Icons.forum_rounded, route: '/chat/inbox', color: _getAdaptiveColor(context, const Color(0xFF009688))),
                 _HomeTile(title: l10n.settings, icon: Icons.settings_rounded, route: '/settings', color: _getAdaptiveColor(context, const Color(0xFF607D8B))),
@@ -197,12 +202,14 @@ class _HomeTile extends StatefulWidget {
   final String title;
   final IconData icon;
   final String route;
+  final Object? routeArguments;
   final Color color;
   
   const _HomeTile({
     required this.title,
     required this.icon,
     required this.route,
+    this.routeArguments,
     required this.color,
   });
 
@@ -250,7 +257,11 @@ class _HomeTileState extends State<_HomeTile> with SingleTickerProviderStateMixi
       onTapUp: (_) {
         setState(() => _isPressed = false);
         _controller.reverse();
-        Navigator.pushNamed(context, widget.route);
+        Navigator.pushNamed(
+          context, 
+          widget.route,
+          arguments: widget.routeArguments,
+        );
       },
       onTapCancel: () {
         setState(() => _isPressed = false);

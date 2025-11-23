@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/orders_provider.dart';
+import '../core/utils/app_localizations.dart';
 
 class ServiceDetailsScreen extends StatefulWidget {
   const ServiceDetailsScreen({super.key});
@@ -25,6 +26,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     final isTimeBasedService = unit == 'hour';
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +70,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'الوصف',
+                            l10n.description,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -98,14 +100,14 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'سعر الوحدة',
+                                l10n.unitPrice,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurface.withOpacity(0.6),
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${price.toStringAsFixed(2)} د.أ',
+                                '${price.toStringAsFixed(2)} ${l10n.jod}',
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: colorScheme.primary,
@@ -120,7 +122,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              _getUnitDisplayName(s['unit'] as String? ?? 'item'),
+                              _getUnitDisplayName(s['unit'] as String? ?? 'item', l10n),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onPrimary,
                                 fontWeight: FontWeight.w600,
@@ -135,7 +137,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   
                   // Quantity Selector
                   Text(
-                    'الكمية',
+                    l10n.quantity,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -171,8 +173,8 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             ),
                             child: Text(
                               isTimeBasedService 
-                                  ? '${qty == qty.toInt() ? qty.toInt() : qty} ${qty == 1 ? 'ساعة' : qty == 0.5 ? 'نصف ساعة' : 'ساعات'}'
-                                  : '${qty.toInt()} ${_getUnitDisplayName(unit)}',
+                                  ? '${qty == qty.toInt() ? qty.toInt() : qty} ${_getTimeUnitDisplay(qty, l10n)}'
+                                  : '${qty.toInt()} ${_getUnitDisplayName(unit, l10n)}',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -213,14 +215,14 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'المبلغ الإجمالي',
+                                l10n.totalAmount,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.onPrimary.withOpacity(0.9),
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${total.toStringAsFixed(2)} د.أ',
+                                '${total.toStringAsFixed(2)} ${l10n.jod}',
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: colorScheme.onPrimary,
@@ -246,8 +248,8 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     child: FilledButton.icon(
                       onPressed: () {
                         final qtyText = isTimeBasedService 
-                            ? '${qty == qty.toInt() ? qty.toInt() : qty} ${qty == 1 ? 'ساعة' : qty == 0.5 ? 'نصف ساعة' : 'ساعات'}'
-                            : '${qty.toInt()} ${_getUnitDisplayName(unit)}';
+                            ? '${qty == qty.toInt() ? qty.toInt() : qty} ${_getTimeUnitDisplay(qty, l10n)}'
+                            : '${qty.toInt()} ${_getUnitDisplayName(unit, l10n)}';
                             
                         final order = OrderItem(
                           id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -258,7 +260,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                         context.read<OrdersProvider>().addOrder(order);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text('تم إرسال الطلب بنجاح'),
+                            content: Text(l10n.orderSent),
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -268,9 +270,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                         Navigator.popUntil(context, ModalRoute.withName('/orders'));
                       },
                       icon: const Icon(Icons.shopping_cart_rounded),
-                      label: const Text(
-                        'اطلب الآن',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      label: Text(
+                        l10n.orderNow,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -284,12 +286,24 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     );
   }
 
-  String _getUnitDisplayName(String unit) {
+  String _getUnitDisplayName(String unit, AppLocalizations l10n) {
     switch(unit) {
-      case 'item': return 'قطعة';
-      case 'basket': return 'سلة';
-      case 'hour': return 'ساعة';
-      default: return 'قطعة';
+      case 'item': return l10n.item;
+      case 'basket': return l10n.basket;
+      case 'hour': return l10n.hour;
+      case 'trip': return l10n.trip;
+      case 'km': return l10n.km;
+      default: return l10n.item;
+    }
+  }
+  
+  String _getTimeUnitDisplay(double qty, AppLocalizations l10n) {
+    if (qty == 1) {
+      return l10n.hour;
+    } else if (qty == 0.5) {
+      return l10n.halfHour;
+    } else {
+      return l10n.hours;
     }
   }
 }

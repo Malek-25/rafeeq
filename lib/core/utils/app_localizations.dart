@@ -34,6 +34,8 @@ class AppLocalizations {
   String get wallet => isArabic ? 'المحفظة' : 'Wallet';
   String get orders => isArabic ? 'الطلبات' : 'Orders';
   String get profile => isArabic ? 'الملف الشخصي' : 'Profile';
+  String get changeProfilePhoto => isArabic ? 'تغيير صورة الملف الشخصي' : 'Change profile photo';
+  String get user => isArabic ? 'مستخدم' : 'User';
   String get settings => isArabic ? 'الإعدادات' : 'Settings';
   String get chat => isArabic ? 'المحادثات' : 'Chat';
   
@@ -42,6 +44,7 @@ class AppLocalizations {
   String get cancel => isArabic ? 'إلغاء' : 'Cancel';
   String get delete => isArabic ? 'حذف' : 'Delete';
   String get edit => isArabic ? 'تعديل' : 'Edit';
+  String get update => isArabic ? 'تحديث' : 'Update';
   String get create => isArabic ? 'إنشاء' : 'Create';
   String get search => isArabic ? 'بحث' : 'Search';
   String get filter => isArabic ? 'تصفية' : 'Filter';
@@ -161,8 +164,16 @@ class AppLocalizations {
   String get fillAllFields => isArabic ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields';
   String get enterValidPrice => isArabic ? 'يرجى إدخال سعر صحيح' : 'Please enter a valid price';
   String get errorAddingService => isArabic ? 'حدث خطأ أثناء إضافة الخدمة' : 'Error adding service';
+  String get editService => isArabic ? 'تعديل الخدمة' : 'Edit Service';
+  String get serviceUpdatedSuccess => isArabic ? 'تم تحديث الخدمة بنجاح!' : 'Service updated successfully!';
+  String get errorUpdatingService => isArabic ? 'حدث خطأ أثناء تحديث الخدمة' : 'Error updating service';
+  String get editHousing => isArabic ? 'تعديل السكن' : 'Edit Housing';
+  String get housingUpdatedSuccess => isArabic ? 'تم تحديث السكن بنجاح!' : 'Housing updated successfully!';
+  String get errorUpdatingHousing => isArabic ? 'حدث خطأ أثناء تحديث السكن' : 'Error updating housing';
   String get by => isArabic ? 'بواسطة:' : 'By:';
   String get jod => isArabic ? 'د.أ' : 'JOD';
+  String get noRating => isArabic ? 'لا توجد تقييمات' : 'No ratings yet';
+  String get averageRating => isArabic ? 'التقييم المتوسط' : 'Average Rating';
   
   // Complete translations for all UI elements
   String get english => isArabic ? 'English' : 'English';
@@ -204,6 +215,48 @@ class AppLocalizations {
   // Transportation
   String get trip => isArabic ? 'رحلة' : 'Trip';
   String get km => isArabic ? 'كم' : 'km';
+  
+  // Orders
+  String get noOrdersYet => isArabic ? 'لا توجد طلبات بعد' : 'No orders yet';
+  String get status => isArabic ? 'الحالة' : 'Status';
+  String get pending => isArabic ? 'قيد الانتظار' : 'Pending';
+  String get accepted => isArabic ? 'مقبول' : 'Accepted';
+  String get completed => isArabic ? 'مكتمل' : 'Completed';
+  String get amount => isArabic ? 'المبلغ' : 'Amount';
+  
+  // Messages
+  String get noMessagesYet => isArabic ? 'لا توجد رسائل بعد' : 'No messages yet';
+  String get noMessages => isArabic ? '(لا توجد رسائل)' : '(no messages)';
+  
+  // Market
+  String get studentMarketOnly => isArabic ? 'سوق الطلاب متاح للطلاب فقط' : 'Student Market is available for students only.';
+  String get refreshed => isArabic ? 'تم التحديث' : 'Refreshed';
+  String get refresh => isArabic ? 'تحديث' : 'Refresh';
+  String get searchMarket => isArabic ? 'ابحث عن كتب، لابتوب، أثاث...' : 'Search books, laptop, furniture...';
+  String get postItem => isArabic ? 'نشر إعلان' : 'Post an item';
+  String get deleteProduct => isArabic ? 'حذف المنتج' : 'Delete Product';
+  String get deleteProductConfirm => isArabic ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Are you sure you want to delete this item?';
+  String get itemDeleted => isArabic ? 'تم حذف المنتج' : 'Item deleted';
+  String get filters => isArabic ? 'التصفية' : 'Filters';
+  String get priceRange => isArabic ? 'نطاق السعر' : 'Price range';
+  String get apply => isArabic ? 'تطبيق' : 'Apply';
+  String get all => isArabic ? 'الكل' : 'All';
+  String get books => isArabic ? 'كتب' : 'Books';
+  String get electronics => isArabic ? 'إلكترونيات' : 'Electronics';
+  String get homeCategory => isArabic ? 'منزل' : 'Home';
+  String get clothes => isArabic ? 'ملابس' : 'Clothes';
+  String get other => isArabic ? 'أخرى' : 'Other';
+  String get noProductsYet => isArabic ? 'لا توجد منتجات بعد' : 'No products yet';
+  String get addFirstProduct => isArabic ? 'كن أول من ينشر منتج!' : 'Be the first to post a product!';
+  String get noItemsFound => isArabic ? 'لا توجد منتجات تطابق البحث' : 'No items found';
+  String get clearFilters => isArabic ? 'مسح الفلاتر' : 'Clear Filters';
+  String get showMyItems => isArabic ? 'عرض إعلاناتي فقط' : 'Show My Items';
+  String get showAllItems => isArabic ? 'عرض جميع الإعلانات' : 'Show All Items';
+  
+  // Housing details
+  String get close => isArabic ? 'إغلاق' : 'Close';
+  String get contactProvider => isArabic ? 'اتصل بالمقدم' : 'Contact Provider';
+  String get housingContactInfo => isArabic ? 'للتواصل مع مقدم السكن، استخدم زر المحادثة أدناه' : 'To contact the housing provider, use the chat button below';
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

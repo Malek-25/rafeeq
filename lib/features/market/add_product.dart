@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/providers/market_provider.dart';
 import '../../core/providers/app_provider.dart';
 import '../../core/models/product.dart';
+import '../../core/firebase/firebase_flags.dart';
+import '../../core/utils/app_localizations.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -47,8 +49,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
+    final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
     return Scaffold(
-      appBar: AppBar(title: Text(editingProduct != null ? 'Edit Item' : 'Post an item')),
+      appBar: AppBar(title: Text(editingProduct != null ? l10n.edit : l10n.postItem)),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Wrap(spacing: 8, children: [
           ...imgs.asMap().entries.map((entry) {
@@ -141,13 +144,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
           DropdownMenuItem(value: 'Used - Acceptable', child: Text('Used - Acceptable')),
         ], onChanged: (v){ setState(()=>condition = v as String); }, decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Condition')),
         const SizedBox(height: 12),
-        TextField(controller: price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Price', border: OutlineInputBorder())),
+        TextField(controller: price, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: '${l10n.price} (${l10n.jod})', border: const OutlineInputBorder(), hintText: '50')),
         const SizedBox(height: 12),
         TextField(controller: desc, maxLines: 4, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder())),
         const SizedBox(height: 8),
         CheckboxListTile(value: negotiable, onChanged: (v)=>setState(()=>negotiable = v ?? false), title: const Text('Negotiable price')),
         const SizedBox(height: 12),
-        FilledButton(onPressed: () {
+        FilledButton(onPressed: () async {
           if (editingProduct != null) {
             // Update existing product
             final updatedProduct = Product(
@@ -165,15 +168,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
               description: desc.text.trim(),
               negotiable: negotiable,
             );
-            context.read<MarketProvider>().updateProduct(updatedProduct);
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item updated')));
+            await context.read<MarketProvider>().updateProduct(updatedProduct);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item updated')));
+              Navigator.pop(context);
+            }
           } else {
             // Add new product
+            final priceValue = double.tryParse(price.text.trim()) ?? 0.0;
+            debugPrint('Creating product with price: ${price.text.trim()} -> $priceValue');
+            
             final p = Product(
               id: DateTime.now().millisecondsSinceEpoch.toString(),
               title: title.text.trim(),
               category: cat,
-              price: double.tryParse(price.text) ?? 0,
+              price: priceValue,
               condition: condition,
               sellerName: appState.userName ?? 'You',
               sellerEmail: appState.userEmail ?? '',
@@ -183,11 +192,47 @@ class _AddProductScreenState extends State<AddProductScreen> {
               images: imgs,
               description: desc.text.trim(),
               negotiable: negotiable,
+              timestamp: DateTime.now(), // Add timestamp for Firestore ordering
             );
-          context.read<MarketProvider>().add(p);
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item posted')));
+            
+            debugPrint('Product created: ${p.title}, price=${p.price}, category=${p.category}');
+            
+            final marketProvider = context.read<MarketProvider>();
+            
+            try {
+              // Add the product (to Firestore or SharedPreferences) with await
+              await marketProvider.add(p);
+              
+              if (context.mounted) {
+                // Verify the product was added
+                final count = marketProvider.totalProductsCount;
+                debugPrint('Total products after add: $count');
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Item posted successfully! (Total: $count)'),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+                
+                // Pop back to market screen
+                // The provider already called notifyListeners(), so UI should update
+                Navigator.pop(context);
+              }
+            } catch (e) {
+              debugPrint('Error in add_product: $e');
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error posting item: $e'),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            }
           }
-          Navigator.pop(context);
         }, child: Text(editingProduct != null ? 'Update' : 'Publish')),
       ]),
     );

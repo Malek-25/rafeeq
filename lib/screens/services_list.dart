@@ -13,14 +13,24 @@ class ServicesListScreen extends StatelessWidget {
     final servicesProvider = context.watch<ServicesProvider>();
     final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
     
+    // Get category filter from route arguments (if provided)
+    final categoryFilter = ModalRoute.of(context)?.settings.arguments as String?;
+    
     // Get appropriate services based on user role
-    final services = appState.role == UserRole.provider 
+    var services = appState.role == UserRole.provider 
         ? servicesProvider.getServicesForProvider(appState.userEmail ?? '')
         : servicesProvider.servicesForStudents;
+    
+    // Filter by category if specified
+    if (categoryFilter != null && categoryFilter.isNotEmpty) {
+      services = services.where((s) => s.category == categoryFilter).toList();
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.laundryCleaning),
+        title: Text(categoryFilter == 'transportation' 
+            ? l10n.transportationCategory 
+            : l10n.laundryCleaning),
         actions: appState.role == UserRole.provider && services.isNotEmpty
             ? [
                 IconButton(
@@ -153,13 +163,29 @@ class ServicesListScreen extends StatelessWidget {
                           )
                         : PopupMenuButton<String>(
                             onSelected: (value) async {
-                              if (value == 'toggle') {
+                              if (value == 'edit') {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/provider/add-service',
+                                  arguments: service,
+                                );
+                              } else if (value == 'toggle') {
                                 await servicesProvider.toggleServiceStatus(service.id);
                               } else if (value == 'delete') {
                                 _showDeleteDialog(context, service.id, servicesProvider, l10n);
                               }
                             },
                             itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.edit, color: Colors.blue),
+                                    const SizedBox(width: 8),
+                                    Text(l10n.edit),
+                                  ],
+                                ),
+                              ),
                               PopupMenuItem(
                                 value: 'toggle',
                                 child: Row(
@@ -204,8 +230,7 @@ class ServicesListScreen extends StatelessWidget {
     switch(category) {
       case 'laundry': return Icons.local_laundry_service_rounded;
       case 'cleaning': return Icons.cleaning_services_rounded;
-      case 'transportation': return Icons.directions_car_rounded;
-      default: return Icons.room_service_rounded;
+      default: return Icons.local_laundry_service_rounded; // Default to laundry icon instead of room_service
     }
   }
 

@@ -137,12 +137,40 @@ class HousingListScreen extends StatelessWidget {
                             children: [
                               Text(housing.description),
                               const SizedBox(height: 4),
-                              Text(
-                                '${housing.pricePerMonth.toStringAsFixed(0)} ${l10n.jod} / ${l10n.month} • ★ ${housing.rating}',
-                                style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    '${housing.pricePerMonth.toStringAsFixed(0)} ${l10n.jod} / ${l10n.month}',
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (housing.rating > 0) ...[
+                                    const Icon(Icons.star, size: 16, color: Colors.amber),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${(housing.rating / 20.0).toStringAsFixed(1)}',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Icon(Icons.star_border, size: 16, color: Colors.grey[400]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.noRating,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                               Text(
                                 '${housing.distanceFromUni.toStringAsFixed(1)} ${l10n.kmFromUniversity}',
@@ -151,35 +179,88 @@ class HousingListScreen extends StatelessWidget {
                                   color: Colors.grey,
                                 ),
                               ),
-                              if (appState.role == UserRole.student)
-                                Text(
-                                  '${l10n.by} ${housing.providerName}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
+                              // Always show provider name for both students and providers
+                              Text(
+                                '${l10n.by} ${housing.providerName}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
                                 ),
+                              ),
                             ],
                           ),
                           trailing: appState.role == UserRole.student 
-                              ? FilledButton(
+                              ? OutlinedButton.icon(
                                   onPressed: () {
-                                    // Navigate to housing details
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('${l10n.viewDetails} ${housing.title}')),
+                                    // Show housing contact information (no purchase option)
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text(housing.title),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text('${l10n.pricePerMonth}: ${housing.pricePerMonth.toStringAsFixed(0)} ${l10n.jod}'),
+                                            const SizedBox(height: 8),
+                                            Text('${l10n.description}: ${housing.description}'),
+                                            const SizedBox(height: 8),
+                                            Text('${l10n.by}: ${housing.providerName}'),
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              l10n.housingContactInfo,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context).primaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            child: Text(l10n.close),
+                                          ),
+                                          OutlinedButton.icon(
+                                            onPressed: () {
+                                              Navigator.pushNamed(context, '/chat/thread', arguments: housing.providerName);
+                                              Navigator.pop(context);
+                                            },
+                                            icon: const Icon(Icons.chat),
+                                            label: Text(l10n.contactProvider),
+                                          ),
+                                        ],
+                                      ),
                                     );
                                   },
-                                  child: Text(l10n.details),
+                                  icon: const Icon(Icons.info_outline),
+                                  label: Text(l10n.viewDetails),
                                 )
                               : PopupMenuButton<String>(
                                   onSelected: (value) async {
-                                    if (value == 'toggle') {
+                                    if (value == 'edit') {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/provider/add-housing',
+                                        arguments: housing,
+                                      );
+                                    } else if (value == 'toggle') {
                                       await housingProvider.toggleHousingStatus(housing.id);
                                     } else if (value == 'delete') {
                                       _showDeleteDialog(context, housing.id, housingProvider, l10n);
                                     }
                                   },
                                   itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.edit, color: Colors.blue),
+                                          const SizedBox(width: 8),
+                                          Text(l10n.edit),
+                                        ],
+                                      ),
+                                    ),
                                     PopupMenuItem(
                                       value: 'toggle',
                                       child: Row(

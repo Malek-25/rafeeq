@@ -22,17 +22,36 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
   
   String selectedCategory = 'laundry';
   String selectedUnit = 'item';
+  Service? editingService; // If editing, this will be set
+  bool _initialized = false;
   
-  final categories = ['laundry', 'cleaning', 'transportation'];
+  final categories = ['laundry', 'cleaning'];
   List<String> get availableUnits {
     if (selectedCategory == 'laundry') {
       return ['item', 'basket'];
     } else if (selectedCategory == 'cleaning') {
       return ['hour'];
-    } else if (selectedCategory == 'transportation') {
-      return ['trip', 'hour', 'km'];
     }
     return ['item'];
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      // Check if we're editing an existing service
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Service) {
+        editingService = args;
+        name.text = args.name;
+        description.text = args.description;
+        price.text = args.pricePerUnit.toString();
+        selectedCategory = args.category;
+        selectedUnit = args.unit;
+        photoPath = args.imagePath;
+        _initialized = true;
+      }
+    }
   }
 
   @override
@@ -49,7 +68,7 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
     final appState = context.watch<AppState>();
     
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.addService)),
+      appBar: AppBar(title: Text(editingService != null ? l10n.editService : l10n.addService)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
@@ -112,7 +131,6 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
               switch(category) {
                 case 'laundry': displayName = l10n.laundryCategory; break;
                 case 'cleaning': displayName = l10n.cleaningCategory; break;
-                case 'transportation': displayName = l10n.transportationCategory; break;
                 default: displayName = category;
               }
               return DropdownMenuItem(
@@ -210,42 +228,82 @@ class _ProviderAddServiceScreenState extends State<ProviderAddServiceScreen> {
                   return;
                 }
                 
-                final service = Service(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: name.text.trim(),
-                  description: description.text.trim(),
-                  pricePerUnit: priceValue,
-                  unit: selectedUnit,
-                  category: selectedCategory,
-                  providerId: appState.userEmail ?? 'unknown',
-                  providerName: appState.userName ?? appState.userEmail?.split('@')[0] ?? 'User',
-                  imagePath: photoPath,
-                  createdAt: DateTime.now(),
-                );
-                
                 final servicesProvider = context.read<ServicesProvider>();
-                final success = await servicesProvider.addService(service);
                 
-                if (context.mounted) {
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(l10n.serviceAddedSuccess),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(l10n.errorAddingService),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                if (editingService != null) {
+                  // Update existing service
+                  final updatedService = Service(
+                    id: editingService!.id,
+                    name: name.text.trim(),
+                    description: description.text.trim(),
+                    pricePerUnit: priceValue,
+                    unit: selectedUnit,
+                    category: selectedCategory,
+                    providerId: editingService!.providerId,
+                    providerName: editingService!.providerName,
+                    imagePath: photoPath,
+                    createdAt: editingService!.createdAt,
+                    isActive: editingService!.isActive,
+                  );
+                  
+                  final success = await servicesProvider.updateService(updatedService);
+                  
+                  if (context.mounted) {
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.serviceUpdatedSuccess),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.errorUpdatingService),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                } else {
+                  // Add new service
+                  final service = Service(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: name.text.trim(),
+                    description: description.text.trim(),
+                    pricePerUnit: priceValue,
+                    unit: selectedUnit,
+                    category: selectedCategory,
+                    providerId: appState.userEmail ?? 'unknown',
+                    providerName: appState.userName ?? appState.userEmail?.split('@')[0] ?? 'User',
+                    imagePath: photoPath,
+                    createdAt: DateTime.now(),
+                  );
+                  
+                  final success = await servicesProvider.addService(service);
+                  
+                  if (context.mounted) {
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.serviceAddedSuccess),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.errorAddingService),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   }
                 }
               },
-              child: Text(l10n.create),
+              child: Text(editingService != null ? l10n.update : l10n.create),
             ),
           ),
         ]),

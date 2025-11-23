@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/product.dart';
 import '../../core/providers/app_provider.dart';
+import '../../core/utils/app_localizations.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   const ProductDetailsScreen({super.key});
@@ -13,9 +14,10 @@ class ProductDetailsScreen extends StatelessWidget {
     // Check if current user is the seller
     final appState = Provider.of<AppState>(context, listen: false);
     final isOwner = appState.userEmail == p.sellerEmail;
+    final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
     
     return Scaffold(
-      appBar: AppBar(title: const Text('Product Details')),
+      appBar: AppBar(title: Text(l10n.details)),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         AspectRatio(aspectRatio: 16/9, child: Container(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.primary.withOpacity(.08)),
@@ -26,7 +28,7 @@ class ProductDetailsScreen extends StatelessWidget {
         const SizedBox(height: 4),
         Text('${p.category} • ${p.condition}', style: TextStyle(color: Theme.of(context).hintColor)),
         const SizedBox(height: 8),
-        Text('\$${p.price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        Text('${p.price.toStringAsFixed(0)} ${l10n.jod}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(children: [
           const Icon(Icons.person, size: 16), const SizedBox(width: 4), Text(p.sellerName),

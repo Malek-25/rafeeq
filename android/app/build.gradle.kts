@@ -13,7 +13,7 @@ android {
         applicationId = "com.example.rafeeq"
 
         // أقل نسخة أندرويد مطلوبة للفيريبيس auth الجديدة
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
 
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

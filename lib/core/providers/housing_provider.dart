@@ -83,12 +83,16 @@ class HousingProvider extends ChangeNotifier {
     }
   }
 
-  // Update a housing
+  // Update a housing listing
   Future<bool> updateHousing(Housing updatedHousing) async {
     try {
       final index = _housings.indexWhere((h) => h.id == updatedHousing.id);
       if (index != -1) {
-        _housings[index] = updatedHousing;
+        // Recalculate distance if coordinates changed
+        final distance = _calculateDistance(updatedHousing.latitude, updatedHousing.longitude);
+        final housingWithDistance = updatedHousing.copyWith(distanceFromUni: distance);
+        
+        _housings[index] = housingWithDistance;
         await _saveHousings();
         notifyListeners();
         return true;

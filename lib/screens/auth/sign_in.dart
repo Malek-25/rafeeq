@@ -300,10 +300,14 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        height: 50,
-                        child: FilledButton(
-                          onPressed: () async {
+                      Material(
+                        color: Theme.of(context).primaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                        elevation: 6,
+                        shadowColor: Colors.black.withOpacity(0.4),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () async {
                             if (_formKey.currentState!.validate()) {
                               final appState = context.read<AppState>();
                               final success = await appState.signIn(
@@ -325,9 +329,24 @@ class _SignInScreenState extends State<SignInScreen> {
                               }
                             }
                           },
-                          child: Text(
-                            l10n.signIn,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          child: Container(
+                            height: 50,
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              l10n.signIn,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
                         ),
                       ),

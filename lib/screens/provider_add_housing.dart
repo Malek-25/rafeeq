@@ -22,6 +22,28 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
   final ImagePicker _picker = ImagePicker();
   final List<String> imagePaths = [];
   String? selectedGender; // 'M' for Male, 'F' for Female, null for both
+  Housing? editingHousing; // If editing, this will be set
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      // Check if we're editing an existing housing
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Housing) {
+        editingHousing = args;
+        title.text = args.title;
+        description.text = args.description;
+        price.text = args.pricePerMonth.toString();
+        lat.text = args.latitude.toString();
+        lng.text = args.longitude.toString();
+        selectedGender = args.genderPreference;
+        imagePaths.addAll(args.imagePaths);
+        _initialized = true;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -39,7 +61,7 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
     final appState = context.watch<AppState>();
     
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.addHousing)),
+      appBar: AppBar(title: Text(editingHousing != null ? l10n.editHousing : l10n.addHousing)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -305,44 +327,87 @@ class _ProviderAddHousingScreenState extends State<ProviderAddHousingScreen> {
                     return;
                   }
                   
-                  final housing = Housing(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: title.text.trim(),
-                    description: description.text.trim(),
-                    pricePerMonth: priceValue,
-                    latitude: latValue,
-                    longitude: lngValue,
-                    distanceFromUni: 0, // Will be calculated in provider
-                    providerId: appState.userEmail ?? 'unknown',
-                    providerName: appState.userName ?? appState.userEmail?.split('@')[0] ?? 'User',
-                    imagePaths: imagePaths,
-                    createdAt: DateTime.now(),
-                    genderPreference: selectedGender,
-                  );
-                  
                   final housingProvider = context.read<HousingProvider>();
-                  final success = await housingProvider.addHousing(housing);
                   
-                  if (context.mounted) {
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.housingAddedSuccess),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                      Navigator.pop(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.housingTooFar),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                  if (editingHousing != null) {
+                    // Update existing housing
+                    final updatedHousing = Housing(
+                      id: editingHousing!.id,
+                      title: title.text.trim(),
+                      description: description.text.trim(),
+                      pricePerMonth: priceValue,
+                      latitude: latValue,
+                      longitude: lngValue,
+                      distanceFromUni: 0, // Will be recalculated in provider
+                      providerId: editingHousing!.providerId,
+                      providerName: editingHousing!.providerName,
+                      imagePaths: imagePaths,
+                      createdAt: editingHousing!.createdAt,
+                      isActive: editingHousing!.isActive,
+                      rating: editingHousing!.rating,
+                      genderPreference: selectedGender,
+                    );
+                    
+                    final success = await housingProvider.updateHousing(updatedHousing);
+                    
+                    if (context.mounted) {
+                      if (success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.housingUpdatedSuccess),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.errorUpdatingHousing),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  } else {
+                    // Add new housing
+                    final housing = Housing(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      title: title.text.trim(),
+                      description: description.text.trim(),
+                      pricePerMonth: priceValue,
+                      latitude: latValue,
+                      longitude: lngValue,
+                      distanceFromUni: 0, // Will be calculated in provider
+                      providerId: appState.userEmail ?? 'unknown',
+                      providerName: appState.userName ?? appState.userEmail?.split('@')[0] ?? 'User',
+                      imagePaths: imagePaths,
+                      createdAt: DateTime.now(),
+                      genderPreference: selectedGender,
+                    );
+                    
+                    final success = await housingProvider.addHousing(housing);
+                    
+                    if (context.mounted) {
+                      if (success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.housingAddedSuccess),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.housingTooFar),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   }
                 },
-                child: Text(l10n.save),
+                child: Text(editingHousing != null ? l10n.update : l10n.save),
               ),
             ),
           ],
