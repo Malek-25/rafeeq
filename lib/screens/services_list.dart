@@ -1,0 +1,240 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../core/providers/app_provider.dart';
+import '../core/providers/services_provider.dart';
+import '../core/utils/app_localizations.dart';
+
+class ServicesListScreen extends StatelessWidget {
+  const ServicesListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    final servicesProvider = context.watch<ServicesProvider>();
+    final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
+    
+    // Get appropriate services based on user role
+    final services = appState.role == UserRole.provider 
+        ? servicesProvider.getServicesForProvider(appState.userEmail ?? '')
+        : servicesProvider.servicesForStudents;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.laundryCleaning),
+        actions: appState.role == UserRole.provider && services.isNotEmpty
+            ? [
+                IconButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/provider/add-service');
+                  },
+                  icon: const Icon(Icons.add),
+                  tooltip: 'إضافة خدمة جديدة',
+                ),
+              ]
+            : null,
+      ),
+      body: services.isEmpty 
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    appState.role == UserRole.provider 
+                        ? Icons.add_business_rounded
+                        : Icons.cleaning_services_rounded,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    appState.role == UserRole.provider 
+                        ? l10n.noServicesYet
+                        : l10n.noServicesAvailable,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  if (appState.role == UserRole.provider) ...[
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/provider/add-service');
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.addNewService),
+                    ),
+                  ],
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: services.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, i) {
+                final service = services[i];
+                return Card(
+                  elevation: 2,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: service.imagePath != null 
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              service.imagePath!,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(_getServiceIcon(service.category)),
+                                );
+                              },
+                            ),
+                          )
+                        : Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(_getServiceIcon(service.category)),
+                          ),
+                    title: Text(
+                      service.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(service.description),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${service.pricePerUnit.toStringAsFixed(2)} د.أ / ${_getUnitDisplayName(service.unit)}',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (appState.role == UserRole.provider)
+                          Text(
+                            'بواسطة: ${service.providerName}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                      ],
+                    ),
+                    trailing: appState.role == UserRole.student 
+                        ? FilledButton(
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context, 
+                                '/services/details', 
+                                arguments: {
+                                  'title': service.name,
+                                  'price': service.pricePerUnit,
+                                  'desc': service.description,
+                                  'unit': service.unit,
+                                  'serviceId': service.id,
+                                }
+                              );
+                            },
+                            child: Text(l10n.details),
+                          )
+                        : PopupMenuButton<String>(
+                            onSelected: (value) async {
+                              if (value == 'toggle') {
+                                await servicesProvider.toggleServiceStatus(service.id);
+                              } else if (value == 'delete') {
+                                _showDeleteDialog(context, service.id, servicesProvider);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'toggle',
+                                child: Row(
+                                  children: [
+                                    Icon(service.isActive ? Icons.pause : Icons.play_arrow),
+                                    const SizedBox(width: 8),
+                                    Text(service.isActive ? 'إيقاف' : 'تفعيل'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete, color: Colors.red),
+                                    SizedBox(width: 8),
+                                    Text('حذف', style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  String _getUnitDisplayName(String unit) {
+    switch(unit) {
+      case 'item': return 'قطعة';
+      case 'basket': return 'سلة';
+      case 'hour': return 'ساعة';
+      default: return unit;
+    }
+  }
+
+  IconData _getServiceIcon(String category) {
+    switch(category) {
+      case 'laundry': return Icons.local_laundry_service_rounded;
+      case 'cleaning': return Icons.cleaning_services_rounded;
+      default: return Icons.room_service_rounded;
+    }
+  }
+
+  void _showDeleteDialog(BuildContext context, String serviceId, ServicesProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تأكيد الحذف'),
+        content: const Text('هل أنت متأكد من حذف هذه الخدمة؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await provider.deleteService(serviceId);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('تم حذف الخدمة بنجاح'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+  }
+}
