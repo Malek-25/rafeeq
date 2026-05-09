@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/app_provider.dart';
+import '../core/theme/theme_provider.dart';
 import '../core/utils/app_localizations.dart';
 import 'home.dart';
 import 'orders.dart';
@@ -45,18 +46,17 @@ class _MainShellScreenState extends State<MainShellScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? const Color(0xFF2A2A2A) : ThemeProvider.border,
+              width: 1,
             ),
-          ],
+          ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -115,40 +115,32 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const activeColor = Color(0xFF1565C0);
-    final inactiveColor = isDark ? const Color(0xFF757575) : const Color(0xFF9E9E9E);
+    final activeColor = isDark ? const Color(0xFF5B8DEF) : ThemeProvider.primary;
+    final inactiveColor = isDark ? const Color(0xFF6B7280) : ThemeProvider.textLight;
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(
-          horizontal: isActive ? 16 : 12,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: isActive
-              ? activeColor.withOpacity(isDark ? 0.2 : 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
+      child: SizedBox(
+        width: 64,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isActive ? activeIcon : icon,
               color: isActive ? activeColor : inactiveColor,
-              size: isActive ? 26 : 24,
+              size: 24,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: isActive ? 11 : 10,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 color: isActive ? activeColor : inactiveColor,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

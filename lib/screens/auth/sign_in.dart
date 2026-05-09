@@ -5,6 +5,7 @@ import '../../core/providers/app_provider.dart';
 import '../../core/providers/locale_provider.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/services/biometric_service.dart';
+import '../../core/widgets/responsive_wrapper.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -52,10 +53,6 @@ class _SignInScreenState extends State<SignInScreen> {
         if (mounted) {
           if (success) {
             Navigator.pushReplacementNamed(context, '/home');
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.isArabic ? 'فشل في تسجيل الدخول' : 'Login failed'), backgroundColor: Colors.red),
-            );
           }
         }
       }
@@ -65,20 +62,18 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _handleSignIn() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-
     final appState = context.read<AppState>();
     final success = await appState.signIn(
       _emailController.text.trim(),
       _passController.text,
     );
-
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid email or password.'), backgroundColor: Color(0xFFD50000)),
+          const SnackBar(content: Text('Invalid email or password.'), backgroundColor: Color(0xFFEB5757)),
         );
       }
     }
@@ -99,300 +94,179 @@ class _SignInScreenState extends State<SignInScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: isDark
-                  ? [const Color(0xFF0D47A1), const Color(0xFF121212)]
-                  : [const Color(0xFF1565C0), const Color(0xFF0D47A1)],
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          actions: [
+            // Language toggle
+            TextButton(
+              onPressed: () {
+                final localeProvider = context.read<LocaleProvider>();
+                if (localeProvider.locale.languageCode == 'ar') {
+                  localeProvider.setEnglish();
+                } else {
+                  localeProvider.setArabic();
+                }
+              },
+              child: Text(
+                context.watch<LocaleProvider>().locale.languageCode == 'ar' ? 'EN' : 'عربي',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white70 : ThemeProvider.textMedium,
+                ),
+              ),
             ),
-          ),
+          ],
+        ),
+        body: ResponsiveWrapper(
           child: SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    // Top bar with language toggle
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: GestureDetector(
-                          onTap: () {
-                            final localeProvider = context.read<LocaleProvider>();
-                            if (localeProvider.locale.languageCode == 'ar') {
-                              localeProvider.setEnglish();
-                            } else {
-                              localeProvider.setArabic();
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withOpacity(0.3)),
-                            ),
-                            child: Text(
-                              context.watch<LocaleProvider>().locale.languageCode == 'ar' ? 'EN' : 'عربي',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Logo
+                      Center(
+                        child: Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: ThemeProvider.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.school_rounded,
+                                size: 36,
+                                color: ThemeProvider.primary,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 24),
 
-                    const SizedBox(height: 40),
-
-                    // Logo
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                      // Title
+                      Text(
+                        l10n.welcomeBack,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : ThemeProvider.textDark,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.school_rounded,
-                            size: 48,
-                            color: Color(0xFF1565C0),
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.isArabic ? 'سجل دخولك للمتابعة' : 'Sign in to your account',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: ThemeProvider.textLight,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Email
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: l10n.email,
+                          prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return l10n.isArabic ? 'مطلوب' : 'Required';
+                          if (!v.contains('@')) return l10n.isArabic ? 'بريد غير صالح' : 'Invalid email';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Password
+                      TextFormField(
+                        controller: _passController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: l10n.password,
+                          prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                           ),
                         ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return l10n.isArabic ? 'مطلوب' : 'Required';
+                          if (v.length < 6) return l10n.isArabic ? '6 أحرف على الأقل' : 'Min 6 characters';
+                          return null;
+                        },
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
-
-                    // App name
-                    const Text(
-                      'RAFEEQ',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.isArabic ? 'رفيقك في الحياة الجامعية' : 'Your Student Life Companion',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    // Form Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 30,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              l10n.welcomeBack,
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              l10n.isArabic ? 'سجل دخولك للمتابعة' : 'Sign in to continue',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isDark ? Colors.grey[400] : const Color(0xFF546E7A),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Email field
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                labelText: l10n.email,
-                                prefixIcon: Icon(Icons.email_outlined, color: isDark ? Colors.grey[400] : const Color(0xFF546E7A)),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) return l10n.isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email';
-                                if (!value.contains('@')) return l10n.isArabic ? 'بريد إلكتروني غير صالح' : 'Invalid email';
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password field
-                            TextFormField(
-                              controller: _passController,
-                              obscureText: _obscurePassword,
-                              decoration: InputDecoration(
-                                labelText: l10n.password,
-                                prefixIcon: Icon(Icons.lock_outline_rounded, color: isDark ? Colors.grey[400] : const Color(0xFF546E7A)),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                                    color: isDark ? Colors.grey[400] : const Color(0xFF546E7A),
-                                  ),
-                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) return l10n.isArabic ? 'أدخل كلمة المرور' : 'Enter your password';
-                                if (value.length < 6) return l10n.isArabic ? '6 أحرف على الأقل' : 'At least 6 characters';
-                                return null;
-                              },
-                            ),
-
-                            // Forgot password
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () => Navigator.pushNamed(context, '/auth/reset'),
-                                child: Text(
-                                  l10n.forgotPassword,
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Sign In Button
-                            SizedBox(
-                              height: 54,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleSignIn,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1565C0),
-                                  foregroundColor: Colors.white,
-                                  elevation: 4,
-                                  shadowColor: const Color(0xFF1565C0).withOpacity(0.4),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        l10n.signIn,
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                              ),
-                            ),
-
-                            // Biometric login
-                            if (_biometricAvailable && _biometricEnabled) ...[
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(child: Divider(color: isDark ? Colors.grey[700] : Colors.grey[300])),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                                    child: Text(
-                                      l10n.isArabic ? 'أو' : 'OR',
-                                      style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[500], fontSize: 13),
-                                    ),
-                                  ),
-                                  Expanded(child: Divider(color: isDark ? Colors.grey[700] : Colors.grey[300])),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                height: 50,
-                                child: OutlinedButton.icon(
-                                  onPressed: _authenticateWithBiometrics,
-                                  icon: const Icon(Icons.fingerprint_rounded, size: 24),
-                                  label: Text(
-                                    l10n.isArabic ? 'الدخول بالبصمة' : 'Biometric Login',
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                      // Forgot password
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => Navigator.pushNamed(context, '/auth/reset'),
+                          child: Text(l10n.forgotPassword, style: const TextStyle(fontSize: 13)),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
 
-                    const SizedBox(height: 24),
-
-                    // Sign up link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          l10n.dontHaveAccount,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 14,
-                          ),
+                      // Sign In button
+                      SizedBox(
+                        height: 50,
+                        child: FilledButton(
+                          onPressed: _isLoading ? null : _handleSignIn,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : Text(l10n.signIn, style: const TextStyle(fontSize: 16)),
                         ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: () => Navigator.pushNamed(context, '/auth/sign-up'),
-                          child: Text(
-                            l10n.createAccount,
-                            style: const TextStyle(
-                              color: Color(0xFFFFAB00),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              decoration: TextDecoration.underline,
-                              decorationColor: Color(0xFFFFAB00),
-                            ),
+                      ),
+
+                      // Biometric
+                      if (_biometricAvailable && _biometricEnabled) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            onPressed: _authenticateWithBiometrics,
+                            icon: const Icon(Icons.fingerprint_rounded),
+                            label: Text(l10n.isArabic ? 'الدخول بالبصمة' : 'Biometric Login'),
                           ),
                         ),
                       ],
-                    ),
 
-                    const SizedBox(height: 40),
-                  ],
+                      const SizedBox(height: 24),
+
+                      // Sign up
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            l10n.dontHaveAccount,
+                            style: TextStyle(color: ThemeProvider.textLight, fontSize: 14),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(context, '/auth/sign-up'),
+                            child: Text(l10n.createAccount),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
