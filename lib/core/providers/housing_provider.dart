@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/housing.dart';
 import '../app_config.dart';
+import '../utils/distance_policy.dart';
 
 class HousingProvider extends ChangeNotifier {
   final List<Housing> _housings = [];
@@ -145,16 +146,8 @@ class HousingProvider extends ChangeNotifier {
     }
   }
 
-  // Calculate distance from university
+  // Calculate distance from university using proper Haversine formula
   double _calculateDistance(double lat, double lng) {
-    // Simplified distance calculation using Haversine formula approximation
-    const uniLat = AppConfig.uniLat;
-    const uniLng = AppConfig.uniLng;
-    
-    final latDiff = (lat - uniLat).abs();
-    final lngDiff = (lng - uniLng).abs();
-    
-    // Rough conversion to km (more accurate would use proper Haversine formula)
-    return (latDiff + lngDiff) * 111;
+    return DistancePolicy.distanceKm(AppConfig.uniLat, AppConfig.uniLng, lat, lng);
   }
 }

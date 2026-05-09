@@ -20,6 +20,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'screens/splash.dart'; // Your actual splash screen
 import 'screens/home.dart';
+import 'screens/main_shell.dart';
 import 'screens/auth/sign_in.dart';
 // ... other screen imports
 import 'screens/auth/sign_up.dart';
@@ -139,7 +140,7 @@ class RafeeqApp extends StatelessWidget {
               '/auth/sign-in': (_) => const SignInScreen(),
               '/auth/sign-up': (_) => const SignUpScreen(),
               '/auth/reset': (_) => const ResetPasswordScreen(),
-              '/home': (_) => const HomeScreen(),
+              '/home': (_) => const MainShellScreen(),
               '/housing': (_) => const HousingListScreen(),
               '/services': (_) => const ServicesListScreen(),
               '/services/details': (_) => const ServiceDetailsScreen(),
@@ -193,13 +194,10 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
-    // When app is closed/minimized, sign out the user
-    if (state == AppLifecycleState.detached || state == AppLifecycleState.paused) {
+    // Only sign out when app is fully terminated (detached), not on pause/minimize
+    if (state == AppLifecycleState.detached) {
       final appState = context.read<AppState>();
       if (appState.isAuthenticated) {
-        // Clear biometric credentials when app is closed
-        BiometricService.clearBiometricCredentials();
         appState.signOut();
       }
     }
@@ -239,7 +237,7 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     final appState = context.watch<AppState>();
 
     if (appState.isAuthenticated) {
-      return const HomeScreen();
+      return const MainShellScreen();
     } else {
       return const SignInScreen();
     }

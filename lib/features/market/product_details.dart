@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/product.dart';
 import '../../core/providers/app_provider.dart';
+import '../../core/providers/orders_provider.dart';
 import '../../core/utils/app_localizations.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
@@ -42,7 +43,22 @@ class ProductDetailsScreen extends StatelessWidget {
         // Only show action buttons if user is not the owner
         if (!isOwner)
           Row(children: [
-            Expanded(child: FilledButton(onPressed: (){}, child: const Text('Buy now'))),
+            Expanded(child: FilledButton(onPressed: (){
+              final order = OrderItem(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                type: 'market',
+                title: p.title,
+                amount: p.price,
+              );
+              context.read<OrdersProvider>().addOrder(order);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.isArabic ? 'تمت إضافة الطلب!' : 'Order placed!'),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }, child: const Text('Buy now'))),
             const SizedBox(width: 8),
             Expanded(child: OutlinedButton(onPressed: (){ Navigator.pushNamed(context, '/chat/thread', arguments: p.sellerName); }, child: const Text('Chat with seller'))),
             const SizedBox(width: 8),
