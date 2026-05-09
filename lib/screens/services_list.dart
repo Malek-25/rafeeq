@@ -85,35 +85,49 @@ class ServicesListScreen extends StatelessWidget {
               itemBuilder: (_, i) {
                 final service = services[i];
                 return Card(
-                  elevation: 2,
+                  elevation: 3,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
                     leading: service.imagePath != null 
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                             child: Image.asset(
                               service.imagePath!,
-                              width: 50,
-                              height: 50,
+                              width: 56,
+                              height: 56,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
-                                  width: 50,
-                                  height: 50,
+                                  width: 56,
+                                  height: 56,
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(8),
+                                    gradient: LinearGradient(
+                                      colors: service.category == 'laundry'
+                                          ? [const Color(0xFFE65100), const Color(0xFFFF6D00)]
+                                          : [const Color(0xFF00897B), const Color(0xFF26A69A)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Icon(_getServiceIcon(service.category)),
+                                  child: Icon(_getServiceIcon(service.category), color: Colors.white, size: 26),
                                 );
                               },
                             ),
                           )
                         : Container(
-                            width: 50,
-                            height: 50,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
-                              color: Colors.grey[300],
+                              gradient: LinearGradient(
+                                colors: service.category == 'laundry'
+                                    ? [const Color(0xFFE65100), const Color(0xFFFF6D00)]
+                                    : [const Color(0xFF00897B), const Color(0xFF26A69A)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(_getServiceIcon(service.category), color: Colors.white, size: 26),
+                          ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(_getServiceIcon(service.category)),

@@ -43,9 +43,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      colorScheme.primary,
-                      colorScheme.primary.withOpacity(0.8),
-                      colorScheme.tertiary.withOpacity(0.6),
+                      const Color(0xFF0D47A1),
+                      const Color(0xFF1565C0),
+                      const Color(0xFF1976D2),
                     ],
                   ),
                 ),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/providers/app_provider.dart';
 import '../core/providers/orders_provider.dart';
 import '../core/providers/chat_provider.dart';
+import '../core/theme/theme_provider.dart';
 import '../core/utils/app_localizations.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -15,8 +16,8 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Check authentication - redirect to sign-in if not authenticated
     if (!app.isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/auth/sign-in');
@@ -27,62 +28,58 @@ class HomeScreen extends StatelessWidget {
     final userName = app.userName ?? app.userEmail?.split('@')[0] ?? 'User';
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       body: CustomScrollView(
         slivers: [
-          // Beautiful App Bar with gradient
+          // Header
           SliverAppBar(
-            expandedHeight: 180,
+            expandedHeight: 200,
             floating: false,
             pinned: true,
             automaticallyImplyLeading: false,
+            backgroundColor: const Color(0xFF1565C0),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      colorScheme.primary,
-                      colorScheme.primary.withOpacity(0.7),
-                      colorScheme.tertiary.withOpacity(0.6),
+                      Color(0xFF0D47A1),
+                      Color(0xFF1565C0),
+                      Color(0xFF1976D2),
                     ],
                   ),
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            // Avatar
+                            // Avatar with white border
                             Container(
-                              width: 52,
-                              height: 52,
+                              width: 56,
+                              height: 56,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0.3),
-                                    Colors.white.withOpacity(0.1),
-                                  ],
-                                ),
+                                border: Border.all(color: Colors.white, width: 2.5),
+                                color: const Color(0xFFFFAB00),
                               ),
-                              child: CircleAvatar(
-                                backgroundColor: Colors.white.withOpacity(0.2),
+                              child: Center(
                                 child: Text(
                                   userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,47 +88,54 @@ class HomeScreen extends StatelessWidget {
                                     '${l10n.welcome}, $userName',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: const Color(0xFFFFAB00),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
                                       app.role == UserRole.provider ? l10n.provider : l10n.student,
                                       style: const TextStyle(
-                                        color: Colors.white,
+                                        color: Color(0xFF1A1A2E),
                                         fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            // Notifications icon
-                            IconButton(
-                              onPressed: () => Navigator.pushNamed(context, '/chat/inbox'),
-                              icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+                            // Notification bell
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: IconButton(
+                                onPressed: () => Navigator.pushNamed(context, '/chat/inbox'),
+                                icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
+                              ),
                             ),
                           ],
                         ),
                         const Spacer(),
                         Text(
                           l10n.whatWouldYouLikeToDo,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 15,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -140,7 +144,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Quick stats row
+          // Quick Stats
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -151,12 +155,13 @@ class HomeScreen extends StatelessWidget {
           // Section title
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
               child: Text(
                 l10n.services,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                 ),
               ),
             ),
@@ -170,14 +175,14 @@ class HomeScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
-                childAspectRatio: 1.1,
+                childAspectRatio: 1.05,
               ),
               delegate: SliverChildListDelegate([
                 _ServiceCard(
                   title: l10n.housing,
                   icon: Icons.home_rounded,
                   route: '/housing',
-                  gradient: const [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  gradient: const [Color(0xFF1565C0), Color(0xFF42A5F5)],
                   subtitle: l10n.isArabic ? 'ابحث عن سكن' : 'Find a place',
                 ),
                 if (app.role == UserRole.student)
@@ -185,50 +190,49 @@ class HomeScreen extends StatelessWidget {
                     title: l10n.studentMarket,
                     icon: Icons.storefront_rounded,
                     route: '/market',
-                    gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)],
+                    gradient: const [Color(0xFF00897B), Color(0xFF26A69A)],
                     subtitle: l10n.isArabic ? 'بيع واشتري' : 'Buy & sell',
                   ),
                 _ServiceCard(
                   title: l10n.laundryCleaning,
                   icon: Icons.local_laundry_service_rounded,
                   route: '/services',
-                  gradient: const [Color(0xFFFC5C7D), Color(0xFF6A82FB)],
+                  gradient: const [Color(0xFFE65100), Color(0xFFFF6D00)],
                   subtitle: l10n.isArabic ? 'غسيل وتنظيف' : 'Fresh & clean',
                 ),
                 _ServiceCard(
                   title: l10n.orders,
                   icon: Icons.receipt_long_rounded,
                   route: '/orders',
-                  gradient: const [Color(0xFFF093FB), Color(0xFFF5576C)],
+                  gradient: const [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
                   subtitle: l10n.isArabic ? 'تتبع طلباتك' : 'Track orders',
                 ),
                 _ServiceCard(
                   title: l10n.inbox,
                   icon: Icons.forum_rounded,
                   route: '/chat/inbox',
-                  gradient: const [Color(0xFF4FACFE), Color(0xFF00F2FE)],
+                  gradient: const [Color(0xFF00838F), Color(0xFF00BCD4)],
                   subtitle: l10n.isArabic ? 'رسائلك' : 'Your messages',
                 ),
                 _ServiceCard(
                   title: l10n.settings,
                   icon: Icons.settings_rounded,
                   route: '/settings',
-                  gradient: const [Color(0xFF43E97B), Color(0xFF38F9D7)],
+                  gradient: const [Color(0xFF37474F), Color(0xFF607D8B)],
                   subtitle: l10n.isArabic ? 'تخصيص' : 'Customize',
                 ),
                 _ServiceCard(
                   title: l10n.profile,
                   icon: Icons.person_rounded,
                   route: '/profile',
-                  gradient: const [Color(0xFFFa709A), Color(0xFFFEE140)],
+                  gradient: const [Color(0xFFC62828), Color(0xFFEF5350)],
                   subtitle: l10n.isArabic ? 'ملفك الشخصي' : 'Your profile',
                 ),
               ]),
             ),
           ),
 
-          // Bottom padding
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
       ),
     );
@@ -241,42 +245,56 @@ class _QuickStatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final orders = context.watch<OrdersProvider>().orders;
     final chatThreads = context.watch<ChatProvider>().inbox;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final pendingOrders = orders.where((o) => o.status == 'Pending').length;
     final unreadChats = chatThreads.length;
+    final completedOrders = orders.where((o) => o.status == 'Completed').length;
 
-    return Row(
-      children: [
-        Expanded(
-          child: _StatChip(
-            icon: Icons.pending_actions_rounded,
-            label: l10n.isArabic ? 'طلبات معلقة' : 'Pending',
-            value: '$pendingOrders',
-            color: Colors.orange,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatChip(
-            icon: Icons.chat_bubble_outline_rounded,
-            label: l10n.isArabic ? 'محادثات' : 'Chats',
-            value: '$unreadChats',
-            color: Colors.blue,
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatChip(
+              icon: Icons.pending_actions_rounded,
+              label: l10n.isArabic ? 'معلقة' : 'Pending',
+              value: '$pendingOrders',
+              color: const Color(0xFFFF6D00),
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatChip(
-            icon: Icons.check_circle_outline_rounded,
-            label: l10n.isArabic ? 'مكتملة' : 'Completed',
-            value: '${orders.where((o) => o.status == 'Completed').length}',
-            color: Colors.green,
+          Container(width: 1, height: 40, color: Colors.grey.withOpacity(0.2)),
+          Expanded(
+            child: _StatChip(
+              icon: Icons.chat_bubble_rounded,
+              label: l10n.isArabic ? 'محادثات' : 'Chats',
+              value: '$unreadChats',
+              color: const Color(0xFF1565C0),
+            ),
           ),
-        ),
-      ],
+          Container(width: 1, height: 40, color: Colors.grey.withOpacity(0.2)),
+          Expanded(
+            child: _StatChip(
+              icon: Icons.check_circle_rounded,
+              label: l10n.isArabic ? 'مكتملة' : 'Done',
+              value: '$completedOrders',
+              color: const Color(0xFF2E7D32),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -296,43 +314,36 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(theme.brightness == Brightness.dark ? 0.15 : 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.grey[400] : const Color(0xFF546E7A),
           ),
-        ],
-      ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
 
-// Service Card with gradient
+// Service Card
 class _ServiceCard extends StatefulWidget {
   final String title;
   final String subtitle;
@@ -361,9 +372,9 @@ class _ServiceCardState extends State<_ServiceCard> with SingleTickerProviderSta
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 120),
+      duration: const Duration(milliseconds: 100),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -376,9 +387,6 @@ class _ServiceCardState extends State<_ServiceCard> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
@@ -394,17 +402,15 @@ class _ServiceCardState extends State<_ServiceCard> with SingleTickerProviderSta
             scale: _scaleAnimation.value,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(18),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: isDark
-                      ? widget.gradient.map((c) => c.withOpacity(0.7)).toList()
-                      : widget.gradient,
+                  colors: widget.gradient,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.gradient.first.withOpacity(isDark ? 0.2 : 0.3),
+                    color: widget.gradient.first.withOpacity(0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),
@@ -416,11 +422,12 @@ class _ServiceCardState extends State<_ServiceCard> with SingleTickerProviderSta
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Icon in white circle-ish background
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
                         widget.icon,
@@ -428,6 +435,7 @@ class _ServiceCardState extends State<_ServiceCard> with SingleTickerProviderSta
                         size: 28,
                       ),
                     ),
+                    // Text at bottom
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -435,18 +443,19 @@ class _ServiceCardState extends State<_ServiceCard> with SingleTickerProviderSta
                           widget.title,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
                           widget.subtitle,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.85),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

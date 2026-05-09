@@ -92,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             height: 40,
                             child: CircularProgressIndicator(
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF1976D2), // Professional blue
+                                Color(0xFF1565C0),
                               ),
                               strokeWidth: 3,
                             ),
