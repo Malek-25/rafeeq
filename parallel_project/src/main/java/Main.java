@@ -1,83 +1,85 @@
 import java.io.File;
 
-/**
- * Main entry point.
- * Runs all benchmarks: Sequential (simple + complex), Outer Threads, Inner Threads
- * for thread counts: 2, 4, 8, 16, 32, 64, 128
- */
+// Main class - runs all tests and records execution times
 public class Main {
 
-    private static final String DATASET_DIR = "dataset";
-    private static final String RESULTS_FILE = "results/performance_results.csv";
-    private static final int[] THREAD_COUNTS = {2, 4, 8, 16, 32, 64, 128};
-
     public static void main(String[] args) throws Exception {
+
+        // Path to dataset folder - CHANGE THIS TO YOUR FOLDER
+        String datasetPath = "dataset";
+
+        // Thread counts to test
+        int[] threadCounts = {2, 4, 8, 16, 32, 64, 128};
+
         System.out.println("========================================");
         System.out.println(" PARALLEL PROGRAMMING - PHASE 2");
-        System.out.println(" Talabat Orders Dataset Analysis");
-        System.out.println("========================================\n");
+        System.out.println(" Talabat Orders Dataset");
+        System.out.println("========================================");
 
-        File[] files = DataReader.listXlsxFiles(DATASET_DIR);
-        System.out.println("Found " + files.length + " .xlsx files in dataset/\n");
+        // Read all files
+        File[] files = DataReader.getFiles(datasetPath);
+        System.out.println("Files found: " + files.length);
+        System.out.println();
 
-        PerformanceLogger logger = new PerformanceLogger(RESULTS_FILE);
-        logger.init();
+        // Create logger
+        PerformanceLogger logger = new PerformanceLogger("results/performance_results.csv");
 
-        // =========== SEQUENTIAL ===========
+        // ============ SEQUENTIAL PROCESSING ============
         System.out.println("--- SEQUENTIAL PROCESSING ---");
-        long startSimple = System.currentTimeMillis();
-        SequentialProcessor.SimpleResult simpleRes = SequentialProcessor.processSimple(files);
-        long simpleTime = System.currentTimeMillis() - startSimple;
-        System.out.println("Simple:  " + simpleTime + " ms  | Total records: " + simpleRes.totalRecords
-                + ", Max: " + simpleRes.maxAmount + ", Min: " + simpleRes.minAmount);
-        logger.log("Sequential", "Simple", 1, simpleTime);
 
-        long startComplex = System.currentTimeMillis();
-        SequentialProcessor.ComplexResult complexRes = SequentialProcessor.processComplex(files);
-        long complexTime = System.currentTimeMillis() - startComplex;
-        System.out.println("Complex: " + complexTime + " ms  | Premium orders: " + complexRes.premiumOrders
-                + ", Total score: " + String.format("%.2f", complexRes.totalWeightedScore));
+        // Simple
+        long start = System.currentTimeMillis();
+        SequentialProcessor.processSimple(files);
+        long simpleTime = System.currentTimeMillis() - start;
+        System.out.println("  Time: " + simpleTime + " ms");
+        logger.log("Sequential", "Simple", 1, simpleTime);
+        System.out.println();
+
+        // Complex
+        start = System.currentTimeMillis();
+        SequentialProcessor.processComplex(files);
+        long complexTime = System.currentTimeMillis() - start;
+        System.out.println("  Time: " + complexTime + " ms");
         logger.log("Sequential", "Complex", 1, complexTime);
         System.out.println();
 
-        // =========== OUTER THREADING ===========
+        // ============ OUTER THREADING ============
         System.out.println("--- OUTER THREADING (extends Thread) ---");
-        for (int n : THREAD_COUNTS) {
-            long t1 = System.currentTimeMillis();
+        for (int n : threadCounts) {
+            start = System.currentTimeMillis();
             OuterThreadProcessor.runSimple(files, n);
-            long outSimple = System.currentTimeMillis() - t1;
-            logger.log("OuterThread", "Simple", n, outSimple);
+            long t1 = System.currentTimeMillis() - start;
+            logger.log("OuterThread", "Simple", n, t1);
 
-            long t2 = System.currentTimeMillis();
+            start = System.currentTimeMillis();
             OuterThreadProcessor.runComplex(files, n);
-            long outComplex = System.currentTimeMillis() - t2;
-            logger.log("OuterThread", "Complex", n, outComplex);
+            long t2 = System.currentTimeMillis() - start;
+            logger.log("OuterThread", "Complex", n, t2);
 
-            System.out.printf("Threads=%3d  | Simple: %5d ms  | Complex: %5d ms%n",
-                    n, outSimple, outComplex);
+            System.out.println("Threads=" + n + "  | Simple: " + t1 + " ms | Complex: " + t2 + " ms");
         }
         System.out.println();
 
-        // =========== INNER THREADING ===========
+        // ============ INNER THREADING ============
         System.out.println("--- INNER THREADING (lambda / Runnable) ---");
-        for (int n : THREAD_COUNTS) {
-            long t1 = System.currentTimeMillis();
+        for (int n : threadCounts) {
+            start = System.currentTimeMillis();
             InnerThreadProcessor.runSimple(files, n);
-            long inSimple = System.currentTimeMillis() - t1;
-            logger.log("InnerThread", "Simple", n, inSimple);
+            long t1 = System.currentTimeMillis() - start;
+            logger.log("InnerThread", "Simple", n, t1);
 
-            long t2 = System.currentTimeMillis();
+            start = System.currentTimeMillis();
             InnerThreadProcessor.runComplex(files, n);
-            long inComplex = System.currentTimeMillis() - t2;
-            logger.log("InnerThread", "Complex", n, inComplex);
+            long t2 = System.currentTimeMillis() - start;
+            logger.log("InnerThread", "Complex", n, t2);
 
-            System.out.printf("Threads=%3d  | Simple: %5d ms  | Complex: %5d ms%n",
-                    n, inSimple, inComplex);
+            System.out.println("Threads=" + n + "  | Simple: " + t1 + " ms | Complex: " + t2 + " ms");
         }
 
         logger.close();
-        System.out.println("\n========================================");
-        System.out.println(" DONE! Results saved to " + RESULTS_FILE);
+        System.out.println();
+        System.out.println("========================================");
+        System.out.println(" DONE! Results saved to results/performance_results.csv");
         System.out.println("========================================");
     }
 }

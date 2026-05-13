@@ -1,84 +1,85 @@
 import java.io.File;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.DoubleAdder;
+import java.util.ArrayList;
 
-/**
- * INNER THREADING implementation.
- * Uses Runnable lambdas / inner Runnable classes instead of extending Thread.
- * Demonstrates the same work with a more compact/modern approach.
- */
+// Inner Threading - uses lambda and inner Runnable
 public class InnerThreadProcessor {
 
-    /**
-     * Simple processing with inner (lambda) threads.
-     */
-    public static long runSimple(File[] files, int threadCount) throws InterruptedException {
-        AtomicLong totalRecords = new AtomicLong(0);
+    // Shared variables
+    private static int totalRecords = 0;
+    private static double totalScore = 0;
+    private static int premiumOrders = 0;
+
+    private static synchronized void addRecords(int count) {
+        totalRecords += count;
+    }
+
+    private static synchronized void addScore(double score) {
+        totalScore += score;
+    }
+
+    private static synchronized void addPremium(int count) {
+        premiumOrders += count;
+    }
+
+    // ---- SIMPLE PROCESSING with inner threads (lambda) ----
+    public static void runSimple(File[] files, int threadCount) throws InterruptedException {
+        totalRecords = 0;
 
         Thread[] threads = new Thread[threadCount];
-        int chunkSize = (int) Math.ceil((double) files.length / threadCount);
+        int filesPerThread = files.length / threadCount;
 
         for (int i = 0; i < threadCount; i++) {
-            final int start = i * chunkSize;
-            final int end = Math.min(start + chunkSize, files.length);
+            final int start = i * filesPerThread;
+            final int end = (i == threadCount - 1) ? files.length : start + filesPerThread;
 
-            // Lambda Runnable - INNER threading style
+            // Lambda expression - inner thread
             threads[i] = new Thread(() -> {
-                if (start >= files.length) return;
-                long localCount = 0;
+                int localCount = 0;
                 for (int f = start; f < end; f++) {
-                    List<Order> orders = DataReader.readFile(files[f]);
+                    ArrayList<Order> orders = DataReader.readFile(files[f]);
                     localCount += orders.size();
                 }
-                totalRecords.addAndGet(localCount);
+                addRecords(localCount);
             });
 
             threads[i].start();
         }
 
-        for (Thread t : threads) t.join();
-        return totalRecords.get();
+        for (int i = 0; i < threadCount; i++) {
+            threads[i].join();
+        }
     }
 
-    /**
-     * Complex processing with inner (lambda) threads.
-     */
-    public static double runComplex(File[] files, int threadCount) throws InterruptedException {
-        DoubleAdder totalScore = new DoubleAdder();
-        AtomicInteger premiumOrders = new AtomicInteger(0);
+    // ---- COMPLEX PROCESSING with inner threads (inner Runnable) ----
+    public static void runComplex(File[] files, int threadCount) throws InterruptedException {
+        totalScore = 0;
+        premiumOrders = 0;
 
         Thread[] threads = new Thread[threadCount];
-        int chunkSize = (int) Math.ceil((double) files.length / threadCount);
+        int filesPerThread = files.length / threadCount;
 
         for (int i = 0; i < threadCount; i++) {
-            final int start = i * chunkSize;
-            final int end = Math.min(start + chunkSize, files.length);
+            final int start = i * filesPerThread;
+            final int end = (i == threadCount - 1) ? files.length : start + filesPerThread;
 
-            // Inner Runnable
+            // Inner Runnable class
             Runnable task = new Runnable() {
                 @Override
                 public void run() {
-                    if (start >= files.length) return;
                     double localScore = 0;
                     int localPremium = 0;
                     for (int f = start; f < end; f++) {
-                        List<Order> orders = DataReader.readFile(files[f]);
+                        ArrayList<Order> orders = DataReader.readFile(files[f]);
                         for (Order o : orders) {
-                            double score = 0.4 * o.getAmount()
-                                         + 0.3 * (60 - o.getDeliveryTime())
-                                         + 0.3 * (o.getRestaurantId() % 10);
+                            double score = 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
                             localScore += score;
-                            if (o.getCity().equalsIgnoreCase("Amman")
-                                    && o.getAmount() > 20
-                                    && o.getDeliveryTime() <= 30) {
+                            if (o.city.equals("Amman") && o.amount > 20 && o.deliveryTime <= 30) {
                                 localPremium++;
                             }
                         }
                     }
-                    totalScore.add(localScore);
-                    premiumOrders.addAndGet(localPremium);
+                    addScore(localScore);
+                    addPremium(localPremium);
                 }
             };
 
@@ -86,7 +87,8 @@ public class InnerThreadProcessor {
             threads[i].start();
         }
 
-        for (Thread t : threads) t.join();
-        return totalScore.sum();
+        for (int i = 0; i < threadCount; i++) {
+            threads[i].join();
+        }
     }
 }

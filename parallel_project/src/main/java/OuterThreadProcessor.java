@@ -1,81 +1,86 @@
 import java.io.File;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.DoubleAdder;
+import java.util.ArrayList;
 
-/**
- * OUTER THREADING implementation.
- * Uses explicit Thread subclasses (extends Thread).
- * Files are divided into chunks - each thread processes its chunk.
- */
+// Outer Threading - uses extends Thread
 public class OuterThreadProcessor {
 
-    // Thread-safe counters for aggregation across threads
-    private static final AtomicLong totalRecords = new AtomicLong();
-    private static final DoubleAdder totalScore = new DoubleAdder();
-    private static final AtomicInteger premiumOrders = new AtomicInteger();
+    // Shared variables (synchronized access)
+    private static int totalRecords = 0;
+    private static double totalScore = 0;
+    private static int premiumOrders = 0;
 
-    /**
-     * Simple processing with outer threads.
-     */
-    public static long runSimple(File[] files, int threadCount) throws InterruptedException {
-        totalRecords.set(0);
-        DoubleAdder maxAmount = new DoubleAdder();
-        maxAmount.add(Double.MIN_VALUE);
+    // Synchronized methods to safely update shared variables
+    private static synchronized void addRecords(int count) {
+        totalRecords += count;
+    }
+
+    private static synchronized void addScore(double score) {
+        totalScore += score;
+    }
+
+    private static synchronized void addPremium(int count) {
+        premiumOrders += count;
+    }
+
+    // ---- SIMPLE PROCESSING with outer threads ----
+    public static void runSimple(File[] files, int threadCount) throws InterruptedException {
+        totalRecords = 0;
 
         Thread[] threads = new Thread[threadCount];
-        int chunkSize = (int) Math.ceil((double) files.length / threadCount);
+        int filesPerThread = files.length / threadCount;
 
         for (int i = 0; i < threadCount; i++) {
-            final int start = i * chunkSize;
-            final int end = Math.min(start + chunkSize, files.length);
-            if (start >= files.length) {
-                threads[i] = new Thread(() -> {}); // empty thread
-                continue;
+            int start = i * filesPerThread;
+            int end;
+            if (i == threadCount - 1) {
+                end = files.length; // last thread takes remaining
+            } else {
+                end = start + filesPerThread;
             }
 
-            threads[i] = new SimpleWorker(files, start, end);
+            threads[i] = new SimpleWorkerThread(files, start, end);
             threads[i].start();
         }
 
-        for (Thread t : threads) t.join();
-        return totalRecords.get();
+        // Wait for all threads to finish
+        for (int i = 0; i < threadCount; i++) {
+            threads[i].join();
+        }
     }
 
-    /**
-     * Complex processing with outer threads.
-     */
-    public static double runComplex(File[] files, int threadCount) throws InterruptedException {
-        totalScore.reset();
-        premiumOrders.set(0);
+    // ---- COMPLEX PROCESSING with outer threads ----
+    public static void runComplex(File[] files, int threadCount) throws InterruptedException {
+        totalScore = 0;
+        premiumOrders = 0;
 
         Thread[] threads = new Thread[threadCount];
-        int chunkSize = (int) Math.ceil((double) files.length / threadCount);
+        int filesPerThread = files.length / threadCount;
 
         for (int i = 0; i < threadCount; i++) {
-            final int start = i * chunkSize;
-            final int end = Math.min(start + chunkSize, files.length);
-            if (start >= files.length) {
-                threads[i] = new Thread(() -> {});
-                continue;
+            int start = i * filesPerThread;
+            int end;
+            if (i == threadCount - 1) {
+                end = files.length;
+            } else {
+                end = start + filesPerThread;
             }
 
-            threads[i] = new ComplexWorker(files, start, end);
+            threads[i] = new ComplexWorkerThread(files, start, end);
             threads[i].start();
         }
 
-        for (Thread t : threads) t.join();
-        return totalScore.sum();
+        for (int i = 0; i < threadCount; i++) {
+            threads[i].join();
+        }
     }
 
-    // ----- Worker Threads (extends Thread) -----
+    // Worker thread for simple processing - extends Thread
+    static class SimpleWorkerThread extends Thread {
+        private File[] files;
+        private int start;
+        private int end;
 
-    static class SimpleWorker extends Thread {
-        private final File[] files;
-        private final int start, end;
-
-        public SimpleWorker(File[] files, int start, int end) {
+        public SimpleWorkerThread(File[] files, int start, int end) {
             this.files = files;
             this.start = start;
             this.end = end;
@@ -83,20 +88,22 @@ public class OuterThreadProcessor {
 
         @Override
         public void run() {
-            long localCount = 0;
+            int localCount = 0;
             for (int i = start; i < end; i++) {
-                List<Order> orders = DataReader.readFile(files[i]);
+                ArrayList<Order> orders = DataReader.readFile(files[i]);
                 localCount += orders.size();
             }
-            totalRecords.addAndGet(localCount);
+            addRecords(localCount);
         }
     }
 
-    static class ComplexWorker extends Thread {
-        private final File[] files;
-        private final int start, end;
+    // Worker thread for complex processing - extends Thread
+    static class ComplexWorkerThread extends Thread {
+        private File[] files;
+        private int start;
+        private int end;
 
-        public ComplexWorker(File[] files, int start, int end) {
+        public ComplexWorkerThread(File[] files, int start, int end) {
             this.files = files;
             this.start = start;
             this.end = end;
@@ -107,21 +114,17 @@ public class OuterThreadProcessor {
             double localScore = 0;
             int localPremium = 0;
             for (int i = start; i < end; i++) {
-                List<Order> orders = DataReader.readFile(files[i]);
+                ArrayList<Order> orders = DataReader.readFile(files[i]);
                 for (Order o : orders) {
-                    double score = 0.4 * o.getAmount()
-                                 + 0.3 * (60 - o.getDeliveryTime())
-                                 + 0.3 * (o.getRestaurantId() % 10);
+                    double score = 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
                     localScore += score;
-                    if (o.getCity().equalsIgnoreCase("Amman")
-                            && o.getAmount() > 20
-                            && o.getDeliveryTime() <= 30) {
+                    if (o.city.equals("Amman") && o.amount > 20 && o.deliveryTime <= 30) {
                         localPremium++;
                     }
                 }
             }
-            totalScore.add(localScore);
-            premiumOrders.addAndGet(localPremium);
+            addScore(localScore);
+            addPremium(localPremium);
         }
     }
 }

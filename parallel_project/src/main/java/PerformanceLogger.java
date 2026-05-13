@@ -1,36 +1,35 @@
 import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
 
-/**
- * Writes benchmark results to a CSV file for easy import into Excel/Report.
- */
+// Simple class to save results to a CSV file
 public class PerformanceLogger {
 
-    private final String outputPath;
     private FileWriter writer;
 
-    public PerformanceLogger(String outputPath) {
-        this.outputPath = outputPath;
-    }
-
-    public void init() throws IOException {
-        Files.createDirectories(Paths.get(outputPath).getParent());
-        writer = new FileWriter(outputPath);
-        writer.write("Mode,Processing,Threads,ExecutionTimeMs\n");
-    }
-
-    public synchronized void log(String mode, String processing, int threads, long millis) {
+    public PerformanceLogger(String filePath) {
         try {
-            writer.write(String.format("%s,%s,%d,%d%n", mode, processing, threads, millis));
-            writer.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+            new File("results").mkdir();
+            writer = new FileWriter(filePath);
+            writer.write("Mode,Processing,Threads,TimeMs\n");
+        } catch (Exception e) {
+            System.out.println("Error creating log file: " + e.getMessage());
         }
     }
 
-    public void close() throws IOException {
-        if (writer != null) writer.close();
+    public void log(String mode, String processing, int threads, long timeMs) {
+        try {
+            writer.write(mode + "," + processing + "," + threads + "," + timeMs + "\n");
+            writer.flush();
+        } catch (Exception e) {
+            System.out.println("Error writing to log: " + e.getMessage());
+        }
+    }
+
+    public void close() {
+        try {
+            writer.close();
+        } catch (Exception e) {
+            // ignore
+        }
     }
 }

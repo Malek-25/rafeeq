@@ -1,82 +1,55 @@
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.List;
 
-/**
- * Reads Talabat order data from .xlsx files using Apache POI.
- */
+// This class reads .xlsx files and returns a list of orders
 public class DataReader {
 
-    /**
-     * List all .xlsx files in the dataset directory.
-     */
-    public static File[] listXlsxFiles(String datasetDir) {
-        File folder = new File(datasetDir);
-        if (!folder.exists() || !folder.isDirectory()) {
-            throw new IllegalArgumentException("Dataset folder not found: " + datasetDir);
-        }
-        File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
+    // Get all .xlsx files from the dataset folder
+    public static File[] getFiles(String folderPath) {
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".xlsx"));
         if (files == null || files.length == 0) {
-            throw new IllegalStateException("No .xlsx files found in: " + datasetDir);
+            System.out.println("ERROR: No .xlsx files found in " + folderPath);
+            return new File[0];
         }
         return files;
     }
 
-    /**
-     * Read a single .xlsx file and return all rows as Order objects.
-     * Skips the header row.
-     */
-    public static List<Order> readFile(File file) {
-        List<Order> orders = new ArrayList<>();
-        try (FileInputStream fis = new FileInputStream(file);
-             Workbook workbook = new XSSFWorkbook(fis)) {
-
+    // Read one .xlsx file and return list of orders
+    public static ArrayList<Order> readFile(File file) {
+        ArrayList<Order> orders = new ArrayList<>();
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            Workbook workbook = new XSSFWorkbook(fis);
             Sheet sheet = workbook.getSheetAt(0);
-            boolean firstRow = true;
 
+            boolean firstRow = true;
             for (Row row : sheet) {
                 if (firstRow) {
-                    firstRow = false;
-                    continue; // skip header
+                    firstRow = false; // skip header row
+                    continue;
                 }
                 try {
-                    long orderId = (long) getNumeric(row.getCell(0));
-                    long customerId = (long) getNumeric(row.getCell(1));
-                    int restaurantId = (int) getNumeric(row.getCell(2));
-                    String city = getString(row.getCell(3));
-                    double amount = getNumeric(row.getCell(4));
-                    int deliveryTime = (int) getNumeric(row.getCell(5));
+                    long orderId = (long) row.getCell(0).getNumericCellValue();
+                    long customerId = (long) row.getCell(1).getNumericCellValue();
+                    int restaurantId = (int) row.getCell(2).getNumericCellValue();
+                    String city = row.getCell(3).getStringCellValue();
+                    double amount = row.getCell(4).getNumericCellValue();
+                    int deliveryTime = (int) row.getCell(5).getNumericCellValue();
 
-                    orders.add(new Order(orderId, customerId, restaurantId,
-                            city, amount, deliveryTime));
-                } catch (Exception ignored) {
-                    // skip malformed rows
+                    orders.add(new Order(orderId, customerId, restaurantId, city, amount, deliveryTime));
+                } catch (Exception e) {
+                    // skip bad rows
                 }
             }
+            workbook.close();
+            fis.close();
         } catch (Exception e) {
-            System.err.println("Error reading file " + file.getName() + ": " + e.getMessage());
+            System.out.println("Error reading: " + file.getName());
         }
         return orders;
-    }
-
-    private static double getNumeric(Cell cell) {
-        if (cell == null) return 0;
-        if (cell.getCellType() == CellType.NUMERIC) return cell.getNumericCellValue();
-        if (cell.getCellType() == CellType.STRING) {
-            try { return Double.parseDouble(cell.getStringCellValue().trim()); }
-            catch (Exception e) { return 0; }
-        }
-        return 0;
-    }
-
-    private static String getString(Cell cell) {
-        if (cell == null) return "";
-        if (cell.getCellType() == CellType.STRING) return cell.getStringCellValue().trim();
-        if (cell.getCellType() == CellType.NUMERIC) return String.valueOf(cell.getNumericCellValue());
-        return "";
     }
 }

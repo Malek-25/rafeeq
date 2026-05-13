@@ -1,13 +1,11 @@
-/**
- * Data model representing a single Talabat order row.
- */
+// This class represents one order from the dataset
 public class Order {
-    private final long orderId;
-    private final long customerId;
-    private final int restaurantId;
-    private final String city;
-    private final double amount;
-    private final int deliveryTime;
+    public long orderId;
+    public long customerId;
+    public int restaurantId;
+    public String city;
+    public double amount;
+    public int deliveryTime;
 
     public Order(long orderId, long customerId, int restaurantId,
                  String city, double amount, int deliveryTime) {
@@ -18,11 +16,4 @@ public class Order {
         this.amount = amount;
         this.deliveryTime = deliveryTime;
     }
-
-    public long getOrderId() { return orderId; }
-    public long getCustomerId() { return customerId; }
-    public int getRestaurantId() { return restaurantId; }
-    public String getCity() { return city; }
-    public double getAmount() { return amount; }
-    public int getDeliveryTime() { return deliveryTime; }
 }
