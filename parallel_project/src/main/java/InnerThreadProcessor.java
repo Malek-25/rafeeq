@@ -71,9 +71,18 @@ public class InnerThreadProcessor {
                     for (int f = start; f < end; f++) {
                         ArrayList<Order> orders = DataReader.readFile(files[f]);
                         for (Order o : orders) {
-                            double score = 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
-                            localScore += score;
+                            // Heavy floating-point computation
+                            for (int k = 0; k < 500; k++) {
+                                localScore += Math.sin(o.amount * k) * Math.cos(o.deliveryTime * k);
+                                localScore += Math.sqrt(o.amount * o.deliveryTime + k);
+                                localScore += Math.log(o.amount + k + 1) * Math.pow(o.deliveryTime, 0.3);
+                            }
+                            localScore += 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
+
                             if (o.city.equals("Amman") && o.amount > 20 && o.deliveryTime <= 30) {
+                                localPremium++;
+                            }
+                            if (o.city.equals("Irbid") && o.amount > 15 && o.deliveryTime <= 45) {
                                 localPremium++;
                             }
                         }

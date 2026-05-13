@@ -30,7 +30,7 @@ public class SequentialProcessor {
         System.out.println("  [Simple] Irbid Orders: " + irbidCount);
     }
 
-    // COMPLEX PROCESSING: weighted score + filtering + aggregation
+    // COMPLEX PROCESSING: heavy math + filtering + aggregation
     public static void processComplex(File[] files) {
         double totalScore = 0;
         int premiumOrders = 0;
@@ -40,12 +40,24 @@ public class SequentialProcessor {
         for (File file : files) {
             ArrayList<Order> orders = DataReader.readFile(file);
             for (Order o : orders) {
-                // Weighted score calculation (floating point operations)
-                double score = 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
+
+                // Heavy floating-point computation (repeated to increase CPU load)
+                double score = 0;
+                for (int k = 0; k < 500; k++) {
+                    score += Math.sin(o.amount * k) * Math.cos(o.deliveryTime * k);
+                    score += Math.sqrt(o.amount * o.deliveryTime + k);
+                    score += Math.log(o.amount + k + 1) * Math.pow(o.deliveryTime, 0.3);
+                }
+
+                // Weighted score
+                score += 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
                 totalScore += score;
 
                 // Multi-condition filtering
                 if (o.city.equals("Amman") && o.amount > 20 && o.deliveryTime <= 30) {
+                    premiumOrders++;
+                }
+                if (o.city.equals("Irbid") && o.amount > 15 && o.deliveryTime <= 45) {
                     premiumOrders++;
                 }
 
@@ -56,7 +68,7 @@ public class SequentialProcessor {
         }
 
         System.out.println("  [Complex] Total Weighted Score: " + totalScore);
-        System.out.println("  [Complex] Premium Orders (Amman, >20 JOD, <=30 min): " + premiumOrders);
+        System.out.println("  [Complex] Premium Orders: " + premiumOrders);
         System.out.println("  [Complex] Amman Total Revenue: " + ammanRevenue);
         System.out.println("  [Complex] Irbid Total Revenue: " + irbidRevenue);
     }
