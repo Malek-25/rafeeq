@@ -4,27 +4,17 @@ import java.util.ArrayList;
 // Inner Threading - uses lambda and inner Runnable
 public class InnerThreadProcessor {
 
-    // Shared variables
     private static int totalRecords = 0;
     private static double totalScore = 0;
     private static int premiumOrders = 0;
 
-    private static synchronized void addRecords(int count) {
-        totalRecords += count;
-    }
-
-    private static synchronized void addScore(double score) {
-        totalScore += score;
-    }
-
-    private static synchronized void addPremium(int count) {
-        premiumOrders += count;
-    }
+    private static synchronized void addRecords(int count) { totalRecords += count; }
+    private static synchronized void addScore(double score) { totalScore += score; }
+    private static synchronized void addPremium(int count) { premiumOrders += count; }
 
     // ---- SIMPLE PROCESSING with inner threads (lambda) ----
     public static void runSimple(File[] files, int threadCount) throws InterruptedException {
         totalRecords = 0;
-
         Thread[] threads = new Thread[threadCount];
         int filesPerThread = files.length / threadCount;
 
@@ -41,20 +31,15 @@ public class InnerThreadProcessor {
                 }
                 addRecords(localCount);
             });
-
             threads[i].start();
         }
-
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
+        for (int i = 0; i < threadCount; i++) { threads[i].join(); }
     }
 
     // ---- COMPLEX PROCESSING with inner threads (inner Runnable) ----
     public static void runComplex(File[] files, int threadCount) throws InterruptedException {
         totalScore = 0;
         premiumOrders = 0;
-
         Thread[] threads = new Thread[threadCount];
         int filesPerThread = files.length / threadCount;
 
@@ -68,16 +53,21 @@ public class InnerThreadProcessor {
                 public void run() {
                     double localScore = 0;
                     int localPremium = 0;
+
                     for (int f = start; f < end; f++) {
                         ArrayList<Order> orders = DataReader.readFile(files[f]);
                         for (Order o : orders) {
-                            // Heavy floating-point computation
-                            for (int k = 0; k < 500; k++) {
-                                localScore += Math.sin(o.amount * k) * Math.cos(o.deliveryTime * k);
-                                localScore += Math.sqrt(o.amount * o.deliveryTime + k);
-                                localScore += Math.log(o.amount + k + 1) * Math.pow(o.deliveryTime, 0.3);
+                            // Per-minute efficiency analysis
+                            double orderScore = 0;
+                            for (int minute = 1; minute <= o.deliveryTime; minute++) {
+                                orderScore += o.amount / minute;
+                                orderScore += (o.deliveryTime - minute) * o.amount / o.deliveryTime;
                             }
-                            localScore += 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
+
+                            double costPerMinute = o.amount / o.deliveryTime;
+                            double efficiency = (o.amount * o.amount) / (o.deliveryTime + 1);
+                            double rating = (orderScore + costPerMinute + efficiency) / 3.0;
+                            localScore += rating;
 
                             if (o.city.equals("Amman") && o.amount > 20 && o.deliveryTime <= 30) {
                                 localPremium++;
@@ -95,9 +85,6 @@ public class InnerThreadProcessor {
             threads[i] = new Thread(task);
             threads[i].start();
         }
-
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
+        for (int i = 0; i < threadCount; i++) { threads[i].join(); }
     }
 }

@@ -4,86 +4,52 @@ import java.util.ArrayList;
 // Outer Threading - uses extends Thread
 public class OuterThreadProcessor {
 
-    // Shared variables (synchronized access)
     private static int totalRecords = 0;
     private static double totalScore = 0;
     private static int premiumOrders = 0;
 
-    // Synchronized methods to safely update shared variables
-    private static synchronized void addRecords(int count) {
-        totalRecords += count;
-    }
-
-    private static synchronized void addScore(double score) {
-        totalScore += score;
-    }
-
-    private static synchronized void addPremium(int count) {
-        premiumOrders += count;
-    }
+    private static synchronized void addRecords(int count) { totalRecords += count; }
+    private static synchronized void addScore(double score) { totalScore += score; }
+    private static synchronized void addPremium(int count) { premiumOrders += count; }
 
     // ---- SIMPLE PROCESSING with outer threads ----
     public static void runSimple(File[] files, int threadCount) throws InterruptedException {
         totalRecords = 0;
-
         Thread[] threads = new Thread[threadCount];
         int filesPerThread = files.length / threadCount;
 
         for (int i = 0; i < threadCount; i++) {
             int start = i * filesPerThread;
-            int end;
-            if (i == threadCount - 1) {
-                end = files.length; // last thread takes remaining
-            } else {
-                end = start + filesPerThread;
-            }
-
+            int end = (i == threadCount - 1) ? files.length : start + filesPerThread;
             threads[i] = new SimpleWorkerThread(files, start, end);
             threads[i].start();
         }
-
-        // Wait for all threads to finish
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
+        for (int i = 0; i < threadCount; i++) { threads[i].join(); }
     }
 
     // ---- COMPLEX PROCESSING with outer threads ----
     public static void runComplex(File[] files, int threadCount) throws InterruptedException {
         totalScore = 0;
         premiumOrders = 0;
-
         Thread[] threads = new Thread[threadCount];
         int filesPerThread = files.length / threadCount;
 
         for (int i = 0; i < threadCount; i++) {
             int start = i * filesPerThread;
-            int end;
-            if (i == threadCount - 1) {
-                end = files.length;
-            } else {
-                end = start + filesPerThread;
-            }
-
+            int end = (i == threadCount - 1) ? files.length : start + filesPerThread;
             threads[i] = new ComplexWorkerThread(files, start, end);
             threads[i].start();
         }
-
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
+        for (int i = 0; i < threadCount; i++) { threads[i].join(); }
     }
 
-    // Worker thread for simple processing - extends Thread
+    // Simple worker - extends Thread
     static class SimpleWorkerThread extends Thread {
         private File[] files;
-        private int start;
-        private int end;
+        private int start, end;
 
         public SimpleWorkerThread(File[] files, int start, int end) {
-            this.files = files;
-            this.start = start;
-            this.end = end;
+            this.files = files; this.start = start; this.end = end;
         }
 
         @Override
@@ -97,32 +63,34 @@ public class OuterThreadProcessor {
         }
     }
 
-    // Worker thread for complex processing - extends Thread
+    // Complex worker - extends Thread
     static class ComplexWorkerThread extends Thread {
         private File[] files;
-        private int start;
-        private int end;
+        private int start, end;
 
         public ComplexWorkerThread(File[] files, int start, int end) {
-            this.files = files;
-            this.start = start;
-            this.end = end;
+            this.files = files; this.start = start; this.end = end;
         }
 
         @Override
         public void run() {
             double localScore = 0;
             int localPremium = 0;
+
             for (int i = start; i < end; i++) {
                 ArrayList<Order> orders = DataReader.readFile(files[i]);
                 for (Order o : orders) {
-                    // Heavy floating-point computation
-                    for (int k = 0; k < 500; k++) {
-                        localScore += Math.sin(o.amount * k) * Math.cos(o.deliveryTime * k);
-                        localScore += Math.sqrt(o.amount * o.deliveryTime + k);
-                        localScore += Math.log(o.amount + k + 1) * Math.pow(o.deliveryTime, 0.3);
+                    // Per-minute efficiency analysis
+                    double orderScore = 0;
+                    for (int minute = 1; minute <= o.deliveryTime; minute++) {
+                        orderScore += o.amount / minute;
+                        orderScore += (o.deliveryTime - minute) * o.amount / o.deliveryTime;
                     }
-                    localScore += 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
+
+                    double costPerMinute = o.amount / o.deliveryTime;
+                    double efficiency = (o.amount * o.amount) / (o.deliveryTime + 1);
+                    double rating = (orderScore + costPerMinute + efficiency) / 3.0;
+                    localScore += rating;
 
                     if (o.city.equals("Amman") && o.amount > 20 && o.deliveryTime <= 30) {
                         localPremium++;

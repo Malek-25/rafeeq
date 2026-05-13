@@ -30,28 +30,36 @@ public class SequentialProcessor {
         System.out.println("  [Simple] Irbid Orders: " + irbidCount);
     }
 
-    // COMPLEX PROCESSING: heavy math + filtering + aggregation
+    // COMPLEX PROCESSING: per-day analytics + per-minute efficiency
     public static void processComplex(File[] files) {
         double totalScore = 0;
         int premiumOrders = 0;
-        double ammanRevenue = 0;
-        double irbidRevenue = 0;
+        double bestDayRevenue = 0;
+        String bestDayFile = "";
+        double totalHoursAmman = 0;
+        double totalHoursIrbid = 0;
 
         for (File file : files) {
             ArrayList<Order> orders = DataReader.readFile(file);
-            for (Order o : orders) {
 
-                // Heavy floating-point computation (repeated to increase CPU load)
-                double score = 0;
-                for (int k = 0; k < 500; k++) {
-                    score += Math.sin(o.amount * k) * Math.cos(o.deliveryTime * k);
-                    score += Math.sqrt(o.amount * o.deliveryTime + k);
-                    score += Math.log(o.amount + k + 1) * Math.pow(o.deliveryTime, 0.3);
+            double dayRevenueAmman = 0;
+            double dayRevenueIrbid = 0;
+            int dayTimeAmman = 0;
+            int dayTimeIrbid = 0;
+
+            for (Order o : orders) {
+                // Per-minute efficiency analysis
+                double orderScore = 0;
+                for (int minute = 1; minute <= o.deliveryTime; minute++) {
+                    orderScore += o.amount / minute;
+                    orderScore += (o.deliveryTime - minute) * o.amount / o.deliveryTime;
                 }
 
-                // Weighted score
-                score += 0.4 * o.amount + 0.3 * (60 - o.deliveryTime) + 0.3 * (o.restaurantId % 10);
-                totalScore += score;
+                // Additional calculations
+                double costPerMinute = o.amount / o.deliveryTime;
+                double efficiency = (o.amount * o.amount) / (o.deliveryTime + 1);
+                double rating = (orderScore + costPerMinute + efficiency) / 3.0;
+                totalScore += rating;
 
                 // Multi-condition filtering
                 if (o.city.equals("Amman") && o.amount > 20 && o.deliveryTime <= 30) {
@@ -61,15 +69,33 @@ public class SequentialProcessor {
                     premiumOrders++;
                 }
 
-                // Aggregation per city
-                if (o.city.equals("Amman")) ammanRevenue += o.amount;
-                if (o.city.equals("Irbid")) irbidRevenue += o.amount;
+                // Grouping per city per day
+                if (o.city.equals("Amman")) {
+                    dayRevenueAmman += o.amount;
+                    dayTimeAmman += o.deliveryTime;
+                } else {
+                    dayRevenueIrbid += o.amount;
+                    dayTimeIrbid += o.deliveryTime;
+                }
+            }
+
+            // Convert minutes to hours per day
+            totalHoursAmman += dayTimeAmman / 60.0;
+            totalHoursIrbid += dayTimeIrbid / 60.0;
+
+            // Find best day (highest revenue)
+            double dayTotal = dayRevenueAmman + dayRevenueIrbid;
+            if (dayTotal > bestDayRevenue) {
+                bestDayRevenue = dayTotal;
+                bestDayFile = file.getName();
             }
         }
 
-        System.out.println("  [Complex] Total Weighted Score: " + totalScore);
+        System.out.println("  [Complex] Total Score: " + totalScore);
         System.out.println("  [Complex] Premium Orders: " + premiumOrders);
-        System.out.println("  [Complex] Amman Total Revenue: " + ammanRevenue);
-        System.out.println("  [Complex] Irbid Total Revenue: " + irbidRevenue);
+        System.out.println("  [Complex] Working Hours Amman: " + totalHoursAmman);
+        System.out.println("  [Complex] Working Hours Irbid: " + totalHoursIrbid);
+        System.out.println("  [Complex] Best Day: " + bestDayFile + " (" + bestDayRevenue + " JOD)");
+        System.out.println("  [Complex] Total Days: " + files.length);
     }
 }
