@@ -21,6 +21,11 @@ public class Main {
         System.out.println("Files found: " + files.length);
         System.out.println();
 
+        // WARM UP: read all files once so disk cache is warm for both tests
+        System.out.println("Loading files into cache...");
+        for (File f : files) { DataReader.readFile(f); }
+        System.out.println("Cache ready.\n");
+
         // Create logger
         PerformanceLogger logger = new PerformanceLogger("results/performance_results.csv");
 
