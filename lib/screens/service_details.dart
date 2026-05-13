@@ -267,7 +267,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             ),
                           ),
                         );
-                        Navigator.popUntil(context, ModalRoute.withName('/orders'));
+                        Navigator.pop(context);
                       },
                       icon: const Icon(Icons.shopping_cart_rounded),
                       label: Text(

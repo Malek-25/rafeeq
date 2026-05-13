@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/product.dart';
 import '../../core/providers/app_provider.dart';
+import '../../core/providers/orders_provider.dart';
 import '../../core/utils/app_localizations.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
@@ -20,15 +21,22 @@ class ProductDetailsScreen extends StatelessWidget {
       appBar: AppBar(title: Text(l10n.details)),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         AspectRatio(aspectRatio: 16/9, child: Container(
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.primary.withOpacity(.08)),
-          child: const Icon(Icons.image, size: 48),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+            ),
+          ),
+          child: const Icon(Icons.image_rounded, size: 56, color: Colors.white70),
         )),
         const SizedBox(height: 12),
         Text(p.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text('${p.category} • ${p.condition}', style: TextStyle(color: Theme.of(context).hintColor)),
         const SizedBox(height: 8),
-        Text('${p.price.toStringAsFixed(0)} ${l10n.jod}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        Text('${p.price.toStringAsFixed(0)} ${l10n.jod}', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1565C0))),
         const SizedBox(height: 8),
         Row(children: [
           const Icon(Icons.person, size: 16), const SizedBox(width: 4), Text(p.sellerName),
@@ -42,7 +50,22 @@ class ProductDetailsScreen extends StatelessWidget {
         // Only show action buttons if user is not the owner
         if (!isOwner)
           Row(children: [
-            Expanded(child: FilledButton(onPressed: (){}, child: const Text('Buy now'))),
+            Expanded(child: FilledButton(onPressed: (){
+              final order = OrderItem(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                type: 'market',
+                title: p.title,
+                amount: p.price,
+              );
+              context.read<OrdersProvider>().addOrder(order);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.isArabic ? 'تمت إضافة الطلب!' : 'Order placed!'),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }, child: const Text('Buy now'))),
             const SizedBox(width: 8),
             Expanded(child: OutlinedButton(onPressed: (){ Navigator.pushNamed(context, '/chat/thread', arguments: p.sellerName); }, child: const Text('Chat with seller'))),
             const SizedBox(width: 8),

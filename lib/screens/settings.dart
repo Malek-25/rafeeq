@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/theme/theme_provider.dart';
 import '../core/providers/locale_provider.dart';
 import '../core/providers/app_provider.dart';
@@ -121,8 +122,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
 
           ListTile(title: Text(l10n.notifications, style: const TextStyle(fontWeight: FontWeight.bold))),
-          SwitchListTile(title: Text(l10n.orderUpdates), value: true, onChanged: (_)=>{}),
-          SwitchListTile(title: Text(l10n.messages), value: true, onChanged: (_)=>{}),
+          _NotificationToggle(title: l10n.orderUpdates, prefKey: 'notify_orders'),
+          _NotificationToggle(title: l10n.messages, prefKey: 'notify_messages'),
           const Divider(),
 
           ListTile(title: Text(isArabic ? 'الأمان' : 'Security', style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -272,6 +273,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+
+class _NotificationToggle extends StatefulWidget {
+  final String title;
+  final String prefKey;
+  const _NotificationToggle({required this.title, required this.prefKey});
+
+  @override
+  State<_NotificationToggle> createState() => _NotificationToggleState();
+}
+
+class _NotificationToggleState extends State<_NotificationToggle> {
+  bool _enabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPref();
+  }
+
+  Future<void> _loadPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _enabled = prefs.getBool(widget.prefKey) ?? true;
+      });
+    }
+  }
+
+  Future<void> _savePref(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(widget.prefKey, value);
+    if (mounted) {
+      setState(() {
+        _enabled = value;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      title: Text(widget.title),
+      value: _enabled,
+      onChanged: (v) => _savePref(v),
     );
   }
 }

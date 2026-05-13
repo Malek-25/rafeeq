@@ -94,39 +94,46 @@ class HousingListScreen extends StatelessWidget {
                     itemBuilder: (context, i) {
                       final housing = housings[i];
                       return Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 3,
+                        shadowColor: Colors.black.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         child: ListTile(
                           contentPadding: const EdgeInsets.all(16),
                           leading: housing.imagePaths.isNotEmpty 
                               ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(12),
                                   child: Image.asset(
                                     housing.imagePaths.first,
-                                    width: 60,
-                                    height: 60,
+                                    width: 64,
+                                    height: 64,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
-                                        width: 60,
-                                        height: 60,
+                                        width: 64,
+                                        height: 64,
                                         decoration: BoxDecoration(
-                                          color: Colors.grey[300],
-                                          borderRadius: BorderRadius.circular(8),
+                                          gradient: const LinearGradient(
+                                            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+                                          ),
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: const Icon(Icons.home),
+                                        child: const Icon(Icons.home_rounded, color: Colors.white, size: 28),
                                       );
                                     },
                                   ),
                                 )
                               : Container(
-                                  width: 60,
-                                  height: 60,
+                                  width: 64,
+                                  height: 64,
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(8),
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(Icons.home),
+                                  child: const Icon(Icons.home_rounded, color: Colors.white, size: 28),
                                 ),
                           title: Text(
                             housing.title,

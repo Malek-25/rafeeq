@@ -6,6 +6,7 @@ import '../../core/providers/app_provider.dart';
 import '../../core/models/product.dart';
 import '../../core/utils/app_localizations.dart';
 import '../../core/firebase/firebase_flags.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class StudentMarketScreen extends StatefulWidget {
   const StudentMarketScreen({super.key});
@@ -230,78 +231,47 @@ class _StudentMarketScreenState extends State<StudentMarketScreen> {
   }
 
   Widget _buildSharedPreferencesView(MarketProvider provider, AppLocalizations l10n) {
-    // Use context.watch to rebuild when provider changes
     final items = provider.items;
     final totalCount = provider.totalProductsCount;
 
     if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList(count: 4);
     }
-
-    debugPrint('Building SharedPreferences view: ${items.length} items (total: $totalCount)');
-    debugPrint('Current filters: query="${provider.category}", category="${provider.category}", price=${provider.priceRange.start}-${provider.priceRange.end}');
 
     if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.storefront_outlined, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(
-              provider.totalProductsCount == 0 ? l10n.noProductsYet : l10n.noItemsFound,
-              style: const TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            if (provider.totalProductsCount > 0) ...[
-              const SizedBox(height: 8),
-              Text(
-                'You have ${provider.totalProductsCount} product(s) but they are filtered out.',
-                style: TextStyle(fontSize: 14, color: Colors.orange[700]),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: () {
-                  provider.resetFilters();
-                },
-                child: Text('Reset Filters (Show All)'),
-              ),
-            ],
-            if (provider.totalProductsCount == 0) ...[
-              const SizedBox(height: 8),
-              Text(
-                l10n.addFirstProduct,
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
-            ],
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/market/add'),
-              icon: const Icon(Icons.add),
-              label: Text(l10n.postItem),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () async {
-                await provider.reloadProducts();
-              },
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.refresh),
-            ),
-          ],
-        ),
-      );
+      if (provider.totalProductsCount == 0) {
+        return EmptyStateWidget(
+          icon: Icons.storefront_rounded,
+          title: l10n.noProductsYet,
+          subtitle: l10n.addFirstProduct,
+          gradientColors: const [Color(0xFF11998E), Color(0xFF38EF7D)],
+          action: FilledButton.icon(
+            onPressed: () => Navigator.pushNamed(context, '/market/add'),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.postItem),
+          ),
+        );
+      } else {
+        return EmptyStateWidget(
+          icon: Icons.search_off_rounded,
+          title: l10n.noItemsFound,
+          subtitle: l10n.isArabic
+              ? 'لديك ${provider.totalProductsCount} منتج(ات) لكنها مفلترة'
+              : 'You have ${provider.totalProductsCount} product(s) but filters are hiding them',
+          gradientColors: const [Color(0xFFFF9800), Color(0xFFFF5722)],
+          action: FilledButton(
+            onPressed: () => provider.resetFilters(),
+            child: Text(l10n.clearFilters),
+          ),
+        );
+      }
     }
 
-    debugPrint('Rendering ${items.length} items in ListView');
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) {
-        debugPrint('Rendering item $i: ${items[i].title}');
-        return _ProductTile(p: items[i]);
-      },
+      itemBuilder: (_, i) => _ProductTile(p: items[i]),
     );
   }
 }
@@ -315,72 +285,193 @@ class _ProductTile extends StatelessWidget {
     final appState = context.watch<AppState>();
     final l10n = AppLocalizations.of(context) ?? AppLocalizations(const Locale('en'));
     final isOwner = appState.userEmail == p.sellerEmail;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Generate a consistent color based on category
+    Color categoryColor;
+    IconData categoryIcon;
+    switch (p.category) {
+      case 'Books':
+        categoryColor = const Color(0xFF6C63FF);
+        categoryIcon = Icons.menu_book_rounded;
+        break;
+      case 'Electronics':
+        categoryColor = const Color(0xFF00BCD4);
+        categoryIcon = Icons.devices_rounded;
+        break;
+      case 'Home':
+        categoryColor = const Color(0xFFFF7043);
+        categoryIcon = Icons.home_rounded;
+        break;
+      case 'Clothes':
+        categoryColor = const Color(0xFFEC407A);
+        categoryIcon = Icons.checkroom_rounded;
+        break;
+      default:
+        categoryColor = const Color(0xFF78909C);
+        categoryIcon = Icons.category_rounded;
+    }
 
     return InkWell(
       onTap: () => Navigator.pushNamed(context, '/market/details', arguments: p),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.brightness == Brightness.dark 
+              ? colorScheme.surfaceContainerHighest 
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.3 : 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           child: Row(children: [
+            // Product image placeholder with gradient
             Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Theme.of(context).colorScheme.primary.withOpacity(.08),
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    categoryColor.withOpacity(0.2),
+                    categoryColor.withOpacity(0.05),
+                  ],
                 ),
-                child: const Icon(Icons.image, size: 36)),
-            const SizedBox(width: 12),
+                border: Border.all(color: categoryColor.withOpacity(0.15)),
+              ),
+              child: Icon(categoryIcon, size: 32, color: categoryColor),
+            ),
+            const SizedBox(width: 14),
             Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                  Text(p.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Expanded(
+                        child: Text(
+                          p.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                      if (p.negotiable)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            l10n.isArabic ? 'قابل للتفاوض' : 'Negotiable',
+                            style: const TextStyle(fontSize: 9, color: Colors.green, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
-                  Text('${p.category} • ${p.condition}',
-                      style: TextStyle(color: Theme.of(context).hintColor)),
-                  const SizedBox(height: 6),
-                  Text('${p.price.toStringAsFixed(0)} ${l10n.jod}',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: categoryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          p.category,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: categoryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        p.condition,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        '${p.price.toStringAsFixed(0)} ${l10n.jod}',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.star_rounded, size: 14, color: Colors.amber[700]),
+                      const SizedBox(width: 2),
+                      Text(
+                        p.sellerRating.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Row(children: [
-                    const Icon(Icons.person, size: 16),
+                    Icon(Icons.person_outline_rounded, size: 13, color: colorScheme.onSurface.withOpacity(0.5)),
                     const SizedBox(width: 4),
-                    Text(p.sellerName),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.star, size: 16, color: Colors.amber),
-                    Text(p.sellerRating.toStringAsFixed(1)),
-                  ]),
-                  const SizedBox(height: 2),
-                  Row(children: [
-                    const Icon(Icons.location_on_outlined, size: 16),
-                    const SizedBox(width: 4),
-                    Text(p.location,
-                        style: TextStyle(color: Theme.of(context).hintColor))
+                    Text(
+                      p.sellerName,
+                      style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withOpacity(0.6)),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(Icons.location_on_outlined, size: 13, color: colorScheme.onSurface.withOpacity(0.5)),
+                    const SizedBox(width: 2),
+                    Flexible(
+                      child: Text(
+                        p.location,
+                        style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withOpacity(0.6)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ]),
                   if (isOwner) ...[
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, size: 22, color: Colors.blue),
+                        _SmallActionButton(
+                          icon: Icons.edit_rounded,
+                          color: Colors.blue,
                           tooltip: l10n.edit,
                           onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/market/add',
-                              arguments: p,
-                            );
+                            Navigator.pushNamed(context, '/market/add', arguments: p);
                           },
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, size: 22, color: Colors.red),
+                        const SizedBox(width: 8),
+                        _SmallActionButton(
+                          icon: Icons.delete_rounded,
+                          color: Colors.red,
                           tooltip: l10n.delete,
                           onPressed: () {
                             showDialog(
@@ -398,15 +489,11 @@ class _ProductTile extends StatelessWidget {
                                       try {
                                         final marketProvider = context.read<MarketProvider>();
                                         await marketProvider.removeProduct(p.id);
-                                        
                                         if (context.mounted) {
                                           Navigator.pop(context);
-                                          
-                                          // Reload products to ensure UI updates (especially for SharedPreferences)
                                           if (!kUseFirebase) {
                                             await marketProvider.reloadProducts();
                                           }
-                                          
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
                                               content: Text(l10n.itemDeleted),
@@ -415,20 +502,18 @@ class _ProductTile extends StatelessWidget {
                                           );
                                         }
                                       } catch (e) {
-                                        debugPrint('Error deleting product: $e');
                                         if (context.mounted) {
                                           Navigator.pop(context);
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
-                                              content: Text('Error deleting item: $e'),
+                                              content: Text('Error: $e'),
                                               backgroundColor: Colors.red,
                                             ),
                                           );
                                         }
                                       }
                                     },
-                                    style: FilledButton.styleFrom(
-                                        backgroundColor: Colors.red),
+                                    style: FilledButton.styleFrom(backgroundColor: Colors.red),
                                     child: Text(l10n.delete),
                                   ),
                                 ],
@@ -439,7 +524,9 @@ class _ProductTile extends StatelessWidget {
                       ],
                     ),
                   ],
-                ])),
+                ],
+              ),
+            ),
           ]),
         ),
       ),
@@ -447,8 +534,38 @@ class _ProductTile extends StatelessWidget {
   }
 }
 
+class _SmallActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _SmallActionButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 18, color: color),
+        ),
+      ),
+    );
+  }
+}
+
 class _FiltersSheet extends StatelessWidget {
-  const _FiltersSheet({super.key});
+  const _FiltersSheet();
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MarketProvider>();
